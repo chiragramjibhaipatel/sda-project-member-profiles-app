@@ -1,10 +1,29 @@
-# This file stores configurations for your Shopify app.
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-scopes = "write_products"
+client_id = "dd66f08b30615f45c7db778b5f4bd59c"
+name = "member-profile-dev"
+handle = "member-profile-dev"
+application_url = "https://currencies-fits-beside-mark.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "crptest-8.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = ""
+
+[auth]
+redirect_urls = [
+  "https://currencies-fits-beside-mark.trycloudflare.com/auth/callback",
+  "https://currencies-fits-beside-mark.trycloudflare.com/auth/shopify/callback",
+  "https://currencies-fits-beside-mark.trycloudflare.com/api/auth/callback"
+]
 
 [webhooks]
 api_version = "2024-07"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks"
+[pos]
+embedded = false
