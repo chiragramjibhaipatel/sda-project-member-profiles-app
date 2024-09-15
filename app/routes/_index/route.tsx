@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(`/app?${url.searchParams.toString()}`);
   }
 
-  return json({ showForm: Boolean(login) });
+  return redirect("/members/login")
 };
 
 export default function App() {
