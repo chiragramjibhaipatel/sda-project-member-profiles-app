@@ -1,10 +1,22 @@
 import {authenticate} from "~/shopify.server";
-import {LoaderFunctionArgs} from "@remix-run/node";
+import {ActionFunctionArgs, json, LoaderFunctionArgs} from "@remix-run/node";
 import {Text, Button, Card, FormLayout, InlineStack, RadioButton, TextField, Box, List, BlockStack, Page} from "@shopify/polaris";
 import {
     ViewIcon, HideIcon
 } from '@shopify/polaris-icons';
 import {useState} from "react";
+import z from 'zod';
+import {useFetcher} from "@remix-run/react";
+
+const MemberSchema = z.object({
+    name: z.string().min(3),
+    email: z.string().min(3).email(),
+    role: z.enum(['Founder', 'Founding Member', 'Member']),
+    password: z.string().min(8),
+    confirmPassword: z.string().min(8)
+}).refine (data => data.password === data.confirmPassword, {message: "Passwords do not match", path: ['confirmPassword']});
+type FlattenedErrors = z.inferFlattenedErrors<typeof MemberSchema>;
+
 
 export const loader = async ({request, params}: LoaderFunctionArgs) => {
     await authenticate.admin (request);
@@ -16,23 +28,46 @@ export const loader = async ({request, params}: LoaderFunctionArgs) => {
     
 }
 
+export const action = async ({request, params}: ActionFunctionArgs) => {
+    await authenticate.admin (request);
+    const formData = await request.formData();
+    const validateData = MemberSchema.safeParse(formData);
+    if (!validateData.success) {
+      return json({ errors: validateData.error.flatten() });
+    }
+    return json({success: true});
+}
+
 
 export default function Member () {
-    const [newMember, setNewMember] = useState ({name: '', email: '', role: 'Member', password: ''});
+    let fetcher = useFetcher();
+    const [newMember, setNewMember] = useState ({name: '', email: '', role: 'Member', password: '', confirmPassword: ''});
+    const [memberError, setMemberError] = useState<FlattenedErrors>();
     const [isPasswordVisible, setIsPasswordVisible] = useState (false);
     const handleMemberChange = (value: string, field: string) => {
 	setNewMember ((prevState) => {
 	    return {...prevState, [field]: value};
 	});
     }
+    const handleMemberCreate = async () => {
+	const validatedData = MemberSchema.safeParse(newMember);
+	if (!validatedData.success) {
+	    setMemberError (validatedData.error.flatten());
+	    return;
+	}
+	setMemberError (undefined);
+	fetcher.submit(newMember, {method: 'post'});
+    }
+    
+    console.log ({memberError});
     
     return (
 	<Page title="New member" backAction={{content: "Dashboard", url:"/app"}} >
 	    <BlockStack gap={"400"}>
 		<Card>
 		    <FormLayout>
-			<TextField id="name" label={"Name"} value={newMember.name} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange}/>
-			<TextField id="email" label={"Email"} value={newMember.email} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange}/>
+			<TextField id="name" label={"Name"} value={newMember.name} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={memberError?.fieldErrors.name}/>
+			<TextField id="email" label={"Email"} value={newMember.email} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={memberError?.fieldErrors.email}/>
 			<InlineStack gap={"400"} blockAlign={"center"}>
 			    <Text as={"h2"} variant={"bodyLg"}>Role</Text>
 			    <RadioButton
@@ -69,8 +104,19 @@ export default function Member () {
 			    autoComplete="off"
 			    connectedRight={<Button icon={isPasswordVisible? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible(prevState => !prevState)}/>}
 			    requiredIndicator={true}
+			    error={memberError?.fieldErrors.password}
 			/>
-			<Button submit variant={"primary"} >Create</Button>
+			<TextField
+			    id="confirmPassword"
+			    label="Confirm Password"
+			    type={isPasswordVisible ? "text" : "password"}
+			    value={newMember.confirmPassword}
+			    onChange={handleMemberChange}
+			    autoComplete="off"
+			    requiredIndicator={true}
+			    error={memberError?.fieldErrors.confirmPassword}
+			/>
+			<Button submit variant={"primary"} onClick={handleMemberCreate}>Create</Button>
 		    </FormLayout>
 		</Card>
 		<Card>
@@ -83,6 +129,5 @@ export default function Member () {
 		</Card>
 	    </BlockStack>
 	</Page>
-	
     );
 }
