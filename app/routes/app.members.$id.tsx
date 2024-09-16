@@ -53,7 +53,7 @@ export default function Member () {
     //todo: redirect to the member page after the member is created, use member handle as its id
     let fetcher = useFetcher ();
     const [newMember, setNewMember] = useState ({name: '', email: '', role: 'Member', password: '', confirmPassword: ''});
-    const [memberError, setMemberError] = useState<FlattenedErrors> ();
+    const [newMemberError, setNewMemberError] = useState<FlattenedErrors> ();
     const [isPasswordVisible, setIsPasswordVisible] = useState (false);
     const handleMemberChange = (value: string, field: string) => {
 	setNewMember ((prevState) => {
@@ -64,10 +64,10 @@ export default function Member () {
 	console.log ("Inside handleMemberCreate");
 	const validatedData = MemberSchema.safeParse (newMember);
 	if (!validatedData.success) {
-	    setMemberError (validatedData.error.flatten ());
+	    setNewMemberError (validatedData.error.flatten ());
 	    return;
 	}
-	setMemberError (undefined);
+	setNewMemberError (undefined);
 	fetcher.submit (newMember, {method: 'post', encType: 'application/json'});
     }
     
@@ -76,8 +76,8 @@ export default function Member () {
 	    <BlockStack gap={"400"}>
 		<Card>
 		    <FormLayout>
-			<TextField id="name" label={"Name"} value={newMember.name} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={memberError?.fieldErrors.name}/>
-			<TextField id="email" label={"Email"} value={newMember.email} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={memberError?.fieldErrors.email}/>
+			<TextField id="name" label={"Name"} value={newMember.name} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={newMemberError?.fieldErrors.name}/>
+			<TextField id="email" label={"Email"} value={newMember.email} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange} error={newMemberError?.fieldErrors.email}/>
 			<InlineStack gap={"400"} blockAlign={"center"}>
 			    <Text as={"h2"} variant={"bodyLg"}>Role</Text>
 			    <RadioButton
@@ -114,7 +114,7 @@ export default function Member () {
 			    autoComplete="off"
 			    connectedRight={<Button icon={isPasswordVisible ? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible (prevState => !prevState)}/>}
 			    requiredIndicator={true}
-			    error={memberError?.fieldErrors.password}
+			    error={newMemberError?.fieldErrors.password}
 			/>
 			<TextField
 			    id="confirmPassword"
@@ -124,7 +124,7 @@ export default function Member () {
 			    onChange={handleMemberChange}
 			    autoComplete="off"
 			    requiredIndicator={true}
-			    error={memberError?.fieldErrors.confirmPassword}
+			    error={newMemberError?.fieldErrors.confirmPassword}
 			/>
 			<Button submit variant={"primary"} onClick={handleMemberCreate}>Create</Button>
 		    </FormLayout>

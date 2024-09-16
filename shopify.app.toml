@@ -3,7 +3,7 @@
 client_id = "dd66f08b30615f45c7db778b5f4bd59c"
 name = "member-profile-dev"
 handle = "member-profile-dev"
-application_url = "https://currencies-fits-beside-mark.trycloudflare.com"
+application_url = "https://employee-vault-attitude-analog.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,13 +13,13 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "write_metaobjects"
 
 [auth]
 redirect_urls = [
-  "https://currencies-fits-beside-mark.trycloudflare.com/auth/callback",
-  "https://currencies-fits-beside-mark.trycloudflare.com/auth/shopify/callback",
-  "https://currencies-fits-beside-mark.trycloudflare.com/api/auth/callback"
+  "https://employee-vault-attitude-analog.trycloudflare.com/auth/callback",
+  "https://employee-vault-attitude-analog.trycloudflare.com/auth/shopify/callback",
+  "https://employee-vault-attitude-analog.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
