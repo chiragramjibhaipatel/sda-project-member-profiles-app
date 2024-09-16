@@ -1,19 +1,17 @@
 import {authenticate} from "~/shopify.server";
 import {ActionFunctionArgs, json, LoaderFunctionArgs} from "@remix-run/node";
-import {Text, Button, Card, FormLayout, InlineStack, RadioButton, TextField, Box, List, BlockStack, Page} from "@shopify/polaris";
-import {
-    ViewIcon, HideIcon
-} from '@shopify/polaris-icons';
+import {BlockStack, Button, Card, FormLayout, InlineStack, List, Page, RadioButton, Text, TextField} from "@shopify/polaris";
+import {HideIcon, ViewIcon} from '@shopify/polaris-icons';
 import {useState} from "react";
 import z from 'zod';
 import {useFetcher} from "@remix-run/react";
 
-const MemberSchema = z.object({
-    name: z.string().min(3),
-    email: z.string().min(3).email(),
-    role: z.enum(['Founder', 'Founding Member', 'Member']),
-    password: z.string().min(8),
-    confirmPassword: z.string().min(8)
+const MemberSchema = z.object ({
+    name: z.string ().min (3),
+    email: z.string ().min (3).email (),
+    role: z.enum (['Founder', 'Founding Member', 'Member']),
+    password: z.string ().min (8),
+    confirmPassword: z.string ().min (8)
 }).refine (data => data.password === data.confirmPassword, {message: "Passwords do not match", path: ['confirmPassword']});
 type FlattenedErrors = z.inferFlattenedErrors<typeof MemberSchema>;
 
@@ -30,19 +28,19 @@ export const loader = async ({request, params}: LoaderFunctionArgs) => {
 
 export const action = async ({request, params}: ActionFunctionArgs) => {
     await authenticate.admin (request);
-    const formData = await request.formData();
-    const validateData = MemberSchema.safeParse(formData);
+    const formData = await request.formData ();
+    const validateData = MemberSchema.safeParse (formData);
     if (!validateData.success) {
-      return json({ errors: validateData.error.flatten() });
+	return json ({errors: validateData.error.flatten ()});
     }
-    return json({success: true});
+    return json ({success: true});
 }
 
 
 export default function Member () {
-    let fetcher = useFetcher();
+    let fetcher = useFetcher ();
     const [newMember, setNewMember] = useState ({name: '', email: '', role: 'Member', password: '', confirmPassword: ''});
-    const [memberError, setMemberError] = useState<FlattenedErrors>();
+    const [memberError, setMemberError] = useState<FlattenedErrors> ();
     const [isPasswordVisible, setIsPasswordVisible] = useState (false);
     const handleMemberChange = (value: string, field: string) => {
 	setNewMember ((prevState) => {
@@ -50,19 +48,19 @@ export default function Member () {
 	});
     }
     const handleMemberCreate = async () => {
-	const validatedData = MemberSchema.safeParse(newMember);
+	const validatedData = MemberSchema.safeParse (newMember);
 	if (!validatedData.success) {
-	    setMemberError (validatedData.error.flatten());
+	    setMemberError (validatedData.error.flatten ());
 	    return;
 	}
 	setMemberError (undefined);
-	fetcher.submit(newMember, {method: 'post'});
+	fetcher.submit (newMember, {method: 'post'});
     }
     
     console.log ({memberError});
     
     return (
-	<Page title="New member" backAction={{content: "Dashboard", url:"/app"}} >
+	<Page title="New member" backAction={{content: "Dashboard", url: "/app"}}>
 	    <BlockStack gap={"400"}>
 		<Card>
 		    <FormLayout>
@@ -76,7 +74,7 @@ export default function Member () {
 				checked={newMember.role === "Founder"}
 				id="Founder"
 				name="role"
-				onChange={() => handleMemberChange("Founder", "role")}
+				onChange={() => handleMemberChange ("Founder", "role")}
 			    />
 			    <RadioButton
 				label="Founding member"
@@ -84,7 +82,7 @@ export default function Member () {
 				id="Founding Member"
 				name="role"
 				checked={newMember.role === "Founding Member"}
-				onChange={() => handleMemberChange("Founding Member", "role")}
+				onChange={() => handleMemberChange ("Founding Member", "role")}
 			    />
 			    <RadioButton
 				label="Member"
@@ -92,7 +90,7 @@ export default function Member () {
 				id="Member"
 				name="role"
 				checked={newMember.role === "Member"}
-				onChange={() => handleMemberChange("Member", "role")}
+				onChange={() => handleMemberChange ("Member", "role")}
 			    />
 			</InlineStack>
 			<TextField
@@ -102,7 +100,7 @@ export default function Member () {
 			    value={newMember.password}
 			    onChange={handleMemberChange}
 			    autoComplete="off"
-			    connectedRight={<Button icon={isPasswordVisible? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible(prevState => !prevState)}/>}
+			    connectedRight={<Button icon={isPasswordVisible ? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible (prevState => !prevState)}/>}
 			    requiredIndicator={true}
 			    error={memberError?.fieldErrors.password}
 			/>
