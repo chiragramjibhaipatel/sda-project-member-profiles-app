@@ -5,6 +5,8 @@ import {HideIcon, ViewIcon} from '@shopify/polaris-icons';
 import {useState} from "react";
 import z from 'zod';
 import {useFetcher} from "@remix-run/react";
+import {createHashedPassword} from "~/utils.server";
+import type {AdminApiContext} from "@shopify/shopify-app-remix/server"
 
 const MemberSchema = z.object ({
     name: z.string ().min (3),
@@ -26,13 +28,81 @@ export const loader = async ({request, params}: LoaderFunctionArgs) => {
     
 }
 
+const CURRENT_APP_INSTALLATION = `#graphql
+    query {
+	currentAppInstallation {
+	    id
+	}
+    }
+`;
+
+const SAVE_HASHED_PASSWORD = `#graphql
+    mutation MetafieldsSet($metafields: MetafieldsSetInput!){
+	metafieldsSet(
+	    metafields:[$metafields]
+	) {
+	    metafields {
+		id
+		namespace
+		key
+		value
+	    }
+	    userErrors {
+		field
+		message
+	    }
+	}
+    }
+`
+const getAppInstallationId = async (admin: AdminApiContext) => {
+    try{
+	const response = await admin.graphql(CURRENT_APP_INSTALLATION)
+	const {data: {currentAppInstallation: {id}}} = await response.json();
+	return {id};
+    } catch(e){
+	console.error(e)
+	throw new Error("Something went wrong while fetching the app installation id");
+    }
+    
+    
+
+};
+const storeHashedPassword = async ({appInstallationId: ownerId, hashedPassword, email: key, admin}: { appInstallationId: any; hashedPassword: string; admin: AdminApiContext; email: string }) => {
+    const namespace = "sda_member_hashed_password";
+    const type = "single_line_text_field";
+    const response = await admin.graphql(SAVE_HASHED_PASSWORD, {
+	variables: {
+	    metafields: {
+		ownerId,
+		namespace,
+		key,
+		value: hashedPassword,
+		type
+	    }
+	}
+    });
+    const {data: {metafieldsSet: {userErrors}}} = await response.json();
+    if (userErrors.length > 0) {
+	throw new Error("Something went wrong while storing the hashed password");
+    }
+};
+//todo: move this to utils.server.js
 export const action = async ({request, params}: ActionFunctionArgs) => {
-    await authenticate.admin (request);
-    const formData = await request.formData ();
+    console.log ("Inside action");
+    const {admin} = await authenticate.admin (request);
+    
+    const formData = await request.json();
     const validateData = MemberSchema.safeParse (formData);
     if (!validateData.success) {
+	console.error(validateData.error.flatten ());
 	return json ({errors: validateData.error.flatten ()});
     }
+    console.log ({validateData});
+    const {name, email, role, password} = validateData.data;
+    const {hashedPassword} = await createHashedPassword ({password});
+    const {id: appInstallationId} = await getAppInstallationId (admin);
+    await storeHashedPassword ({admin, appInstallationId, email, hashedPassword});
+    // await createMember ({name, email, role, admin});
     return json ({success: true});
 }
 
@@ -48,16 +118,15 @@ export default function Member () {
 	});
     }
     const handleMemberCreate = async () => {
+	console.log ("Inside handleMemberCreate");
 	const validatedData = MemberSchema.safeParse (newMember);
 	if (!validatedData.success) {
 	    setMemberError (validatedData.error.flatten ());
 	    return;
 	}
 	setMemberError (undefined);
-	fetcher.submit (newMember, {method: 'post'});
+	fetcher.submit (newMember, {method: 'post', encType: 'application/json'});
     }
-    
-    console.log ({memberError});
     
     return (
 	<Page title="New member" backAction={{content: "Dashboard", url: "/app"}}>
@@ -129,3 +198,5 @@ export default function Member () {
 	</Page>
     );
 }
+
+
