@@ -37,3 +37,4 @@ Using Shopify Remix app template
  - Compulsory reset password on first login
  - Reset password
  - Member dashboard will be available at the app URL(outside of Shopify Admin)
+ - The member profile url will be like this: ```https://psi-arabic-thai-ser.trycloudflare.com/members/chirag7```
