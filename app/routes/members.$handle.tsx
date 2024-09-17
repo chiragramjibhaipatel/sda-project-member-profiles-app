@@ -3,7 +3,7 @@ import "@shopify/polaris/build/esm/styles.css";
 import React, {useState} from "react";
 import {json, LoaderFunctionArgs, redirect} from "@remix-run/node";
 import {unauthenticated} from "~/shopify.server";
-import {getMemberByHandle} from "~/utils.server";
+import {getMemberByHandle, updateMember} from "~/utils.server";
 import {Form, useFetcher, useLoaderData} from "@remix-run/react";
 import {sessionStorage} from "~/session.server";
 
@@ -27,8 +27,25 @@ export const loader = async ({params, request}: LoaderFunctionArgs) => {
     }
     const {admin} = await unauthenticated.admin (process.env.SHOP);
     let member = await getMemberByHandle ({admin, handle});
-    member = Object.entries(member).map(([key, value]) => ({ key, value: value.value })).reduce((acc,curr) => ({...acc, [curr.key]: curr.value}), {} as typeof member);
     return json ({member});
+}
+
+export const action = async ({request}: LoaderFunctionArgs) => {
+    const formData = await request.json();
+    const cookieSession = await sessionStorage.getSession (
+	request.headers.get ('cookie'),
+    )
+    const handle = cookieSession.get ('handle');
+    if (!handle) {
+	return redirect ('/members/login', {headers: {'Set-Cookie': await sessionStorage.destroySession(cookieSession)}});
+    }
+    if(!process.env.SHOP) {
+	return new Response ("Shop is not defined", {status: 400});
+    }
+    const {admin} = await unauthenticated.admin (process.env.SHOP);
+    const {name, working_hours, id} = formData;
+    await updateMember ({admin, id, handle, name, working_hours});
+    return redirect (`/members/${handle}`);
 }
 
 
@@ -39,7 +56,7 @@ export default function MembersLogin () {
     const [updatedMember, setUpdatedMember] = useState(member);
     const handleMemberChange = (value: string, field: string) => {
 	setUpdatedMember ((prevState: typeof member) => {
-	    return {...prevState, [field]: value};
+	    return {...prevState, [field]: {value}};
 	});
     }
     
@@ -47,18 +64,21 @@ export default function MembersLogin () {
 	fetcher.submit({}, {method: 'post', action: '/members/logout'});
     }
     
+    const handleMemberUpdate = () => {
+	fetcher.submit(updatedMember, {method: 'post', encType: 'application/json'});
+    };
     return (
-	<Page title={`Hello ${updatedMember.name} 👋`} fullWidth={false} primaryAction={{content: "Logout", onAction: handleLogout}}>
+	<Page title={`Hello ${updatedMember.name.value} 👋`} fullWidth={false} primaryAction={{content: "Logout", onAction: handleLogout}}>
 	    <Layout>
 		<Layout.Section variant={"oneHalf"}>
 		    <Card>
 			<Form id="member-form">
 			
 			<FormLayout>
-			    <TextField name="name" id="name" label={"Name"} value={updatedMember.name} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange}/>
-			    <TextField name="email" id="email" label={"Email"} value={updatedMember.email} autoComplete={"off"} requiredIndicator={true} readOnly/>
-			    <TextField id="working_hours" label="Working Hours" autoComplete={"off"} value={updatedMember.working_hours} onChange={handleMemberChange}/>
-			    <Button variant={"primary"}>Update</Button>
+			    <TextField name="name" id="name" label={"Name"} value={updatedMember.name.value} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange}/>
+			    <TextField name="email" id="email" label={"Email"} value={updatedMember.email.value} autoComplete={"off"} requiredIndicator={true} readOnly/>
+			    <TextField id="working_hours" label="Working Hours" autoComplete={"off"} value={updatedMember.working_hours.value} onChange={handleMemberChange}/>
+			    <Button variant={"primary"} onClick={handleMemberUpdate}>Update</Button>
 			</FormLayout>
 			</Form>
 		    </Card>
