@@ -69,7 +69,7 @@ export default function Member () {
     }
     
     return (
-	<Page title="New member" backAction={{content: "Dashboard", url: "/app"}}>
+	<Page title="Add new member" backAction={{content: "Dashboard", url: "/app"}}>
 	    <BlockStack gap={"400"}>
 		<Card>
 		    <FormLayout>
