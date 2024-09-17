@@ -32,7 +32,7 @@ export const action = async ({request, params}: ActionFunctionArgs) => {
     const {admin} = await authenticate.admin (request);
     
     const formData = await request.json();
-    const validateData = MemberSchema.safeParse(formData, );
+    const validateData = MemberSchema.safeParse(formData);
     if (!validateData.success) {
 	return json ({errors: validateData.error.flatten ()});
     }
