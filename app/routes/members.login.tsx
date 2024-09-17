@@ -6,7 +6,8 @@ import z from "zod";
 import {useFetcher} from "@remix-run/react";
 import {ActionFunctionArgs, json, redirect} from "@remix-run/node";
 import {unauthenticated} from "~/shopify.server";
-import {getMemberByEmail, validateLogin} from "~/utils.server";
+import {validateLogin} from "~/utils.server";
+import {sessionStorage} from "~/session.server";
 
 const LoginForm = z.object ({
     username: z.string ().min (1),
@@ -30,13 +31,15 @@ export const action = async ({request}: ActionFunctionArgs) => {
     }
     const {admin} = await unauthenticated.admin (process.env.SHOP);
     const {username, password} = validateData.data;
-    const {isValidLogin} = await validateLogin ({admin, username, password});
+    const {isValidLogin, handle} = await validateLogin ({admin, username, password});
     if (!isValidLogin) {
 	return new Response ("Invalid login", {status: 401});
     }
-    //get the user details from the metaobject
-    const {handle} = await getMemberByEmail ({admin, username: loginData.username});
-    return redirect (`/members/${handle}`);
+    const cookieSession = await sessionStorage.getSession(
+	request.headers.get('cookie'),
+    )
+    cookieSession.set('handle', handle);
+    return redirect (`/members/${handle}`, {headers: { 'Set-Cookie': await sessionStorage.commitSession(cookieSession)}});
 }
 
 export default function MembersLogin () {

@@ -29,20 +29,18 @@ export const loader = async ({request, params}: LoaderFunctionArgs) => {
 }
 
 export const action = async ({request, params}: ActionFunctionArgs) => {
-    console.log ("Inside action");
     const {admin} = await authenticate.admin (request);
     
     const formData = await request.json();
     const validateData = MemberSchema.safeParse(formData, );
     if (!validateData.success) {
-	console.error(validateData.error.flatten ());
 	return json ({errors: validateData.error.flatten ()});
     }
     const {name, email, role, password} = validateData.data;
     const {hashedPassword} = await createHashedPassword ({password});
     const {id: appInstallationId} = await getAppInstallationId (admin);
-    await storeHashedPassword ({admin, appInstallationId, email, hashedPassword});
     const {handle} = await createMember ({name, email, role, admin});
+    await storeHashedPassword ({admin, appInstallationId, email, handle, hashedPassword});
     return redirect (`/app/members/${handle}`);
 }
 
@@ -61,7 +59,6 @@ export default function Member () {
 	});
     }
     const handleMemberCreate = async () => {
-	console.log ("Inside handleMemberCreate");
 	const validatedData = MemberSchema.safeParse (newMember);
 	if (!validatedData.success) {
 	    setNewMemberError (validatedData.error.flatten ());

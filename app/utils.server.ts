@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
-import {AdminApiContext} from "@shopify/shopify-app-remix/server";
-import {redirect} from "@remix-run/node";
+import type {AdminApiContext} from "@shopify/shopify-app-remix/server";
 
 export const createHashedPassword = async ({password}: {password: string;}) => {
     const salt = await bcrypt.genSalt(10);
@@ -64,27 +63,15 @@ const GET_MEMBER_PASSWORD_BY_EMAIL = `#graphql
 const GET_MEMBER_BY_HANDLE = `#graphql
     query GetMemner($handle: MetaobjectHandleInput!){
         metaobjectByHandle(handle:$handle){
+            id
             name: field(key:"name"){
                 value
             }
             email: field(key:"email"){
                 value
             }
-        }
-    }
-`
-
-const GET_MEMBER_BY_EMAIL = `#graphql
-    query GetMemberByEmail($query: String!){
-        metaobjects(first:1, query: $query, type:"member_profile"){
-            edges{
-                node{
-                    handle
-                    fields{
-                        value
-                        key
-                    }
-                }
+            working_hours: field(key:"working_hours"){
+                value
             }
         }
     }
@@ -103,16 +90,16 @@ export const getAppInstallationId = async (admin: AdminApiContext) => {
     
     
 };
-export const storeHashedPassword = async ({appInstallationId: ownerId, hashedPassword, email: key, admin}: { appInstallationId: any; hashedPassword: string; admin: AdminApiContext; email: string }) => {
+export const storeHashedPassword = async ({appInstallationId: ownerId, hashedPassword,email:key, handle, admin}: { appInstallationId: any; hashedPassword: string; admin: AdminApiContext; email:string; handle: string }) => {
     const namespace = "sda_member_hashed_password";
-    const type = "single_line_text_field";
+    const type = "json";
     const response = await admin.graphql(SAVE_HASHED_PASSWORD, {
         variables: {
             metafields: {
                 ownerId,
                 namespace,
                 key,
-                value: hashedPassword,
+                value: JSON.stringify({handle, hashedPassword}),
                 type
             }
         }
@@ -153,39 +140,20 @@ export const createMember = async ({role, name, email, admin}: { role: string; n
 };
 export const validateLogin = async ({admin, username, password}: { password: string; admin: AdminApiContext; username: string }) => {
     let isValidLogin = false;
-    console.log("Inside validateLogin");
     const response = await admin.graphql(GET_MEMBER_PASSWORD_BY_EMAIL, {
         variables:{
             key: username
         }
     });
-    const {data: {currentAppInstallation: {metafield: {value: hashedPassword}}}} = await response.json();
-    console.log("Value", hashedPassword);
-    if(!hashedPassword){
-        return {isValidLogin};
+    const {data: {currentAppInstallation: {metafield: {value}}}} = await response.json();
+    const {handle, hashedPassword} = JSON.parse(value);
+    if(!hashedPassword || !handle){
+        return {isValidLogin: false};
     }
-    console.log ("checking password");
-    isValidLogin = await bcrypt.compare(password, hashedPassword);
-    console.log("isValidLogin", isValidLogin);
     return {
-        isValidLogin
+        isValidLogin: await bcrypt.compare(password, hashedPassword),
+        handle
     }
-};
-
-    export const getMemberByEmail =async ({admin, username}: { admin: AdminApiContext; username: File | string | null }) => {
-    const response = await admin.graphql(GET_MEMBER_BY_EMAIL,{
-        variables:{
-            query: `email:${username}`
-        }
-    });
-    const {data: {metaobjects: {edges}}} = await response.json();
-    if(edges.length === 0){
-        throw new Error("Member not found");
-    }
-        const {node} = edges[0];
-    
-        console.log("Member", node);
-        return {handle: node.handle};
 };
 
     export const getMemberByHandle = async ({admin, handle}: { admin: AdminApiContext; handle: string }) => {
@@ -197,8 +165,7 @@ export const validateLogin = async ({admin, username, password}: { password: str
                         }
                 }
         });
-        const {data: {metaobjectByHandle: {name, email}}} = await response.json();
-        console.log("Name", name);
+        const {data: {metaobjectByHandle: {name, email, working_hours}}} = await response.json();
         
-        return {name, email};
+        return {name, email, working_hours};
     }
