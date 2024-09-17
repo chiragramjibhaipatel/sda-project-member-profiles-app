@@ -1,5 +1,6 @@
 import {authenticate} from "~/shopify.server";
-import {ActionFunctionArgs, json, LoaderFunctionArgs, redirect} from "@remix-run/node";
+import type {ActionFunctionArgs, LoaderFunctionArgs} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {BlockStack, Button, Card, FormLayout, InlineStack, List, Page, RadioButton, Text, TextField} from "@shopify/polaris";
 import {HideIcon, ViewIcon} from '@shopify/polaris-icons';
 import {useState} from "react";
@@ -31,8 +32,8 @@ export const loader = async ({request, params}: LoaderFunctionArgs) => {
 export const action = async ({request, params}: ActionFunctionArgs) => {
     const {admin} = await authenticate.admin (request);
     
-    const formData = await request.json();
-    const validateData = MemberSchema.safeParse(formData);
+    const formData = await request.json ();
+    const validateData = MemberSchema.safeParse (formData);
     if (!validateData.success) {
 	return json ({errors: validateData.error.flatten ()});
     }
