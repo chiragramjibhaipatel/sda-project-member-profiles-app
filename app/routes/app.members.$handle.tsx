@@ -19,12 +19,12 @@ type FlattenedErrors = z.inferFlattenedErrors<typeof MemberSchema>;
 
 export const loader = async ({request, params}: LoaderFunctionArgs) => {
     await authenticate.admin (request);
-    const {id} = params;
-    if (id === 'new') {
+    const {handle} = params;
+    if (handle === 'new') {
 	return {member: null};
     }
     //todo: fetch the member details and return it
-    return {member: {id: id, name: 'John Doe'}};
+    return {member: {}};
     
 }
 
