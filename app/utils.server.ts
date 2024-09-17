@@ -139,20 +139,24 @@ export const createMember = async ({role, name, email, admin}: { role: string; n
     
 };
 export const validateLogin = async ({admin, username, password}: { password: string; admin: AdminApiContext; username: string }) => {
-    let isValidLogin = false;
-    const response = await admin.graphql(GET_MEMBER_PASSWORD_BY_EMAIL, {
-        variables:{
-            key: username
+    try{
+        const response = await admin.graphql(GET_MEMBER_PASSWORD_BY_EMAIL, {
+            variables:{
+                key: username
+            }
+        });
+        const {data: {currentAppInstallation: {metafield: {value}}}} = await response.json();
+        const {handle, hashedPassword} = JSON.parse(value);
+        if(!hashedPassword || !handle){
+            return {isValidLogin: false};
         }
-    });
-    const {data: {currentAppInstallation: {metafield: {value}}}} = await response.json();
-    const {handle, hashedPassword} = JSON.parse(value);
-    if(!hashedPassword || !handle){
+        return {
+            isValidLogin: await bcrypt.compare(password, hashedPassword),
+            handle
+        }
+    } catch (e) {
+        console.error(e);
         return {isValidLogin: false};
-    }
-    return {
-        isValidLogin: await bcrypt.compare(password, hashedPassword),
-        handle
     }
 };
 
