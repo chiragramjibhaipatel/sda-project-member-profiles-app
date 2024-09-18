@@ -1,87 +1,100 @@
-import {Button, Card, FormLayout, Layout, Page, TextField} from "@shopify/polaris";
+import { Button, Card, FormLayout, Layout, Page, TextField, InlineError} from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import {HideIcon, ViewIcon} from "@shopify/polaris-icons";
 import React, {useState} from "react";
 import z from "zod";
-import {useFetcher} from "@remix-run/react";
-import {ActionFunctionArgs, json, redirect} from "@remix-run/node";
+import {Form, useActionData} from "@remix-run/react";
+import type {ActionFunctionArgs} from "@remix-run/node";
+import { json, redirect} from "@remix-run/node";
 import {unauthenticated} from "~/shopify.server";
-import {validateLogin} from "~/utils.server";
+import {validateLogin} from "~/utils/utils.server";
 import {sessionStorage} from "~/session.server";
+import {useIsPending} from "~/utils/misc";
+import {getFormProps, useForm, useInputControl} from "@conform-to/react";
+import {parseWithZod} from "@conform-to/zod";
 
 const LoginForm = z.object ({
     username: z.string ().min (1),
     password: z.string ().min (1)
 });
-type LoginFormErrors = z.inferFlattenedErrors<typeof LoginForm>;
-
 
 export const action = async ({request}: ActionFunctionArgs) => {
     const formData = await request.formData ();
-    const loginData = {
-	username: formData.get ('username'),
-	password: formData.get ('password')
-    };
-    const validateData = LoginForm.safeParse (loginData);
-    if (!validateData.success) {
-	return json ({errors: validateData.error.flatten ()});
-    }
     if (!process.env.SHOP) {
 	return new Response ("Shop is not defined", {status: 400});
     }
     const {admin} = await unauthenticated.admin (process.env.SHOP);
-    const {username, password} = validateData.data;
-    const {isValidLogin, handle} = await validateLogin ({admin, username, password});
-    if (!isValidLogin) {
-	return new Response ("Invalid login", {status: 401});
+    
+    const submission = await parseWithZod (formData, {
+	    	schema: () =>
+		    LoginForm.transform(async (data, ctx) => {
+			const {username, password} = data;
+			const {isValidLogin, handle} = await validateLogin ({admin, username, password});
+			if (!isValidLogin) {
+			    ctx.addIssue({
+				code: 'custom',
+				message: 'Invalid username or password',
+			    })
+			    return z.NEVER
+			}
+			return { ...data, handle }
+		    }),
+		async: true
+	});
+    
+    if (submission.status !== 'success') {
+	return json(submission.reply());
     }
-    const cookieSession = await sessionStorage.getSession(
-	request.headers.get('cookie'),
+    
+    const cookieSession = await sessionStorage.getSession (
+	request.headers.get ('cookie'),
     )
-    cookieSession.set('handle', handle);
-    return redirect (`/members/${handle}`, {headers: { 'Set-Cookie': await sessionStorage.commitSession(cookieSession)}});
+    const {handle} = submission.value;
+    cookieSession.set ('handle', handle);
+    return redirect (`/members/${handle}`, {headers: {'Set-Cookie': await sessionStorage.commitSession (cookieSession)}});
 }
 
 export default function MembersLogin () {
-    const fetcher = useFetcher ();
+    const actionData = useActionData<typeof action> ()
+    const isPending = useIsPending ()
+    
+    const [form, fields] = useForm ({
+	id: 'login-form',
+	lastResult: actionData,
+	onValidate ({formData}) {
+	    return parseWithZod (formData, {schema: LoginForm})
+	},
+	shouldRevalidate: 'onBlur',
+    });
+    
+    const username = useInputControl(fields.username);
+    const password = useInputControl(fields.password);
+    
     const [isPasswordVisible, setIsPasswordVisible] = useState (false)
-    const [loginForm, setLoginForm] = useState ({username: '', password: ''});
-    const [loginFormError, setLoginFormError] = useState<LoginFormErrors> ();
     
-    const handleLoginFormChange = (value: string, field: string) => {
-	setLoginForm ((prevState) => {
-	    return {...prevState, [field]: value};
-	});
-    }
-    
-    const handleLogin = () => {
-	const validateData = LoginForm.safeParse (loginForm);
-	if (!validateData.success) {
-	    console.error (validateData.error.flatten ());
-	    return;
-	}
-	setLoginFormError (undefined);
-	fetcher.submit (loginForm, {method: 'post'});
-	
-	
-    };
     return (
 	<Page fullWidth={false}>
-	    <Layout>
-		<Layout.Section variant={"oneHalf"}>
-		    <Card>
-			<FormLayout>
-			    <TextField id="username" label={"Username"} value={loginForm.username} autoComplete={"off"} requiredIndicator={true} onChange={handleLoginFormChange} error={loginFormError?.fieldErrors.username}/>
-			    <TextField id="password"
-				       label={"Password"} value={loginForm.password} autoComplete={"off"} requiredIndicator={true} onChange={handleLoginFormChange} error={loginFormError?.fieldErrors.password}
-				       type={isPasswordVisible ? "text" : "password"}
-				       connectedRight={<Button icon={isPasswordVisible ? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible (prevState => !prevState)}/>}
-			    />
-			    <Button variant={"primary"} onClick={handleLogin}>Login</Button>
-			</FormLayout>
-		    </Card>
-		</Layout.Section>
-	    </Layout>
+	    <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
+		<Layout>
+		    <Layout.Section variant={"oneHalf"}>
+			<Card>
+			    <FormLayout>
+				<TextField label={"Username"}
+					   value={username.value}
+					   autoComplete={"off"}
+					   onChange={username.change}
+					   error={fields.username.errors}/>
+				<TextField label={"Password"} value={password.value} autoComplete={"off"} requiredIndicator={true} onChange={password.change} error={fields.password.errors}
+					   type={isPasswordVisible ? "text" : "password"}
+					   connectedRight={<Button icon={isPasswordVisible ? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible (prevState => !prevState)}/>}
+				/>
+				<Button loading={isPending} submit variant={"primary"} >Login</Button>
+				<InlineError message={form.errors?.join("-") || ""} fieldID={form.id} />
+			    </FormLayout>
+			</Card>
+		    </Layout.Section>
+		</Layout>
+	    </Form>
 	</Page>
     );
 }

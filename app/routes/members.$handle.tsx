@@ -3,7 +3,7 @@ import "@shopify/polaris/build/esm/styles.css";
 import React, {useState} from "react";
 import {json, LoaderFunctionArgs, redirect} from "@remix-run/node";
 import {unauthenticated} from "~/shopify.server";
-import {getMemberByHandle, updateMember} from "~/utils.server";
+import {getMemberByHandle, updateMember} from "~/utils/utils.server";
 import {Form, useFetcher, useLoaderData} from "@remix-run/react";
 import {sessionStorage} from "~/session.server";
 

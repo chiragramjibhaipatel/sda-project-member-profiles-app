@@ -156,8 +156,11 @@ export const validateLogin = async ({admin, username, password}: { password: str
 		key: username
 	    }
 	});
-	const {data: {currentAppInstallation: {metafield: {value}}}} = await response.json ();
-	const {handle, hashedPassword} = JSON.parse (value);
+	const {data: {currentAppInstallation: {metafield}}} = await response.json ();
+	if(!metafield){
+	    return {isValidLogin: false};
+	}
+	const {handle, hashedPassword} = JSON.parse (metafield.value);
 	if (!hashedPassword || !handle) {
 	    return {isValidLogin: false};
 	}

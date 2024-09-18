@@ -6,7 +6,7 @@ import {HideIcon, ViewIcon} from '@shopify/polaris-icons';
 import {useState} from "react";
 import z from 'zod';
 import {useFetcher} from "@remix-run/react";
-import {createHashedPassword, createMember, getAppInstallationId, storeHashedPassword} from "~/utils.server";
+import {createHashedPassword, createMember, getAppInstallationId, storeHashedPassword} from "~/utils/utils.server";
 
 const MemberSchema = z.object ({
     name: z.string ().min (3),
