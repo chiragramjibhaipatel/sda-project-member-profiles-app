@@ -22,9 +22,6 @@ export const loader = async ({params, request}: LoaderFunctionArgs) => {
     if (!handle) {
 	return json ({member: null});
     }
-    if (!process.env.SHOP) {
-	return new Response ("Shop is not defined", {status: 400});
-    }
     const {admin} = await unauthenticated.admin (process.env.SHOP);
     let member = await getMemberByHandle ({admin, handle});
     return json ({member});
@@ -38,9 +35,6 @@ export const action = async ({request}: LoaderFunctionArgs) => {
     const handle = cookieSession.get ('handle');
     if (!handle) {
 	return redirect ('/members/login', {headers: {'Set-Cookie': await sessionStorage.destroySession(cookieSession)}});
-    }
-    if(!process.env.SHOP) {
-	return new Response ("Shop is not defined", {status: 400});
     }
     const {admin} = await unauthenticated.admin (process.env.SHOP);
     const {name, working_hours, id} = formData;

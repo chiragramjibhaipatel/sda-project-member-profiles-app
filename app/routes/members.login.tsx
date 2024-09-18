@@ -1,17 +1,19 @@
-import { Button, Card, FormLayout, Layout, Page, TextField, InlineError} from "@shopify/polaris";
+import {Button, Card, FormLayout, InlineError, Layout, Page, TextField} from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import {HideIcon, ViewIcon} from "@shopify/polaris-icons";
 import React, {useState} from "react";
 import z from "zod";
 import {Form, useActionData} from "@remix-run/react";
 import type {ActionFunctionArgs} from "@remix-run/node";
-import { json, redirect} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {unauthenticated} from "~/shopify.server";
 import {validateLogin} from "~/utils/utils.server";
 import {sessionStorage} from "~/session.server";
 import {useIsPending} from "~/utils/misc";
 import {getFormProps, useForm, useInputControl} from "@conform-to/react";
 import {parseWithZod} from "@conform-to/zod";
+import {HoneypotInputs} from "remix-utils/honeypot/react";
+import {checkHoneypot} from "~/utils/honeypot.server";
 
 const LoginForm = z.object ({
     username: z.string ().min (1),
@@ -20,30 +22,28 @@ const LoginForm = z.object ({
 
 export const action = async ({request}: ActionFunctionArgs) => {
     const formData = await request.formData ();
-    if (!process.env.SHOP) {
-	return new Response ("Shop is not defined", {status: 400});
-    }
+    checkHoneypot (formData);
     const {admin} = await unauthenticated.admin (process.env.SHOP);
     
     const submission = await parseWithZod (formData, {
-	    	schema: () =>
-		    LoginForm.transform(async (data, ctx) => {
-			const {username, password} = data;
-			const {isValidLogin, handle} = await validateLogin ({admin, username, password});
-			if (!isValidLogin) {
-			    ctx.addIssue({
-				code: 'custom',
-				message: 'Invalid username or password',
-			    })
-			    return z.NEVER
-			}
-			return { ...data, handle }
-		    }),
-		async: true
-	});
+	schema: () =>
+	    LoginForm.transform (async (data, ctx) => {
+		const {username, password} = data;
+		const {isValidLogin, handle} = await validateLogin ({admin, username, password});
+		if (!isValidLogin) {
+		    ctx.addIssue ({
+			code: 'custom',
+			message: 'Invalid username or password',
+		    })
+		    return z.NEVER
+		}
+		return {...data, handle}
+	    }),
+	async: true
+    });
     
     if (submission.status !== 'success') {
-	return json(submission.reply());
+	return json (submission.reply ());
     }
     
     const cookieSession = await sessionStorage.getSession (
@@ -67,14 +67,15 @@ export default function MembersLogin () {
 	shouldRevalidate: 'onBlur',
     });
     
-    const username = useInputControl(fields.username);
-    const password = useInputControl(fields.password);
+    const username = useInputControl (fields.username);
+    const password = useInputControl (fields.password);
     
     const [isPasswordVisible, setIsPasswordVisible] = useState (false)
     
     return (
 	<Page fullWidth={false}>
-	    <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
+	    <Form method={"POST"} {...getFormProps (form)} onSubmit={form.onSubmit}>
+		<HoneypotInputs/>
 		<Layout>
 		    <Layout.Section variant={"oneHalf"}>
 			<Card>
@@ -88,8 +89,8 @@ export default function MembersLogin () {
 					   type={isPasswordVisible ? "text" : "password"}
 					   connectedRight={<Button icon={isPasswordVisible ? HideIcon : ViewIcon} onClick={() => setIsPasswordVisible (prevState => !prevState)}/>}
 				/>
-				<Button loading={isPending} submit variant={"primary"} >Login</Button>
-				<InlineError message={form.errors?.join("-") || ""} fieldID={form.id} />
+				<Button loading={isPending} submit variant={"primary"}>Login</Button>
+				<InlineError message={form.errors?.join ("-") || ""} fieldID={form.id}/>
 			    </FormLayout>
 			</Card>
 		    </Layout.Section>

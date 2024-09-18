@@ -35,10 +35,12 @@
     "@shopify/shopify-app-remix": "^3.0.2",
     "@shopify/shopify-app-session-storage-prisma": "^5.0.2",
     "bcryptjs": "^2.4.3",
+    "crypto-js": "^4.2.0",
     "isbot": "^5.1.0",
     "prisma": "^5.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "remix-utils": "^7.6.0",
     "vite-tsconfig-paths": "^5.0.1",
     "zod": "^3.23.8"
   },

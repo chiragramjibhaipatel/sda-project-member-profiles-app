@@ -7,6 +7,9 @@ import {
 } from "@remix-run/node";
 import { isbot } from "isbot";
 import { addDocumentResponseHeaders } from "./shopify.server";
+import {getEnv, init} from "./utils/env.server";
+init();
+global.ENV = getEnv()
 
 const ABORT_DELAY = 5000;
 
