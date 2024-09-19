@@ -68,23 +68,23 @@ query GetMemner($handle: MetaobjectHandleInput!){
     metaobjectByHandle(handle:$handle){
         id
         fields{
-	    key
-	    value
+            key
+            value
         }
     }
 }
 `;
 
 const UPDATE_METAOBJECT = `#graphql
-    mutation UpdateMetaobject($id: ID!, $metaobject: MetaobjectUpdateInput!) {
-	metaobjectUpdate(id: $id, metaobject: $metaobject ) {
-	    userErrors {
-		field
-		message
-		code
-	    }
-	}
+mutation UpdateMetaobject($id: ID!, $metaobject: MetaobjectUpdateInput!) {
+    metaobjectUpdate(id: $id, metaobject: $metaobject ) {
+        userErrors {
+            field
+            message
+            code
+        }
     }
+}
 `;
 export const getAppInstallationId = async (admin: AdminApiContext) => {
   try {
@@ -270,10 +270,16 @@ export const updateMember = async ({
 };
 
 function convertInputToGqlFormat(input: { [key: string]: any }) {
-  return Object.keys(input).map((key) => ({
-    key: key,
-    value: input[key],
-  }));
+  return Object.keys(input).map((key) => {
+    let value = input[key];
+    if (key === "languages") {
+      value = JSON.stringify(value);
+    }
+    return {
+      key: key,
+      value: value,
+    };
+  });
 }
 
 function convertInputToJSONObjectFormat({
@@ -284,7 +290,11 @@ function convertInputToJSONObjectFormat({
   const result = {} as { [key: string]: any };
   fields.forEach((field) => {
     if (field.value !== null) {
-      result[field.key] = field.value;
+      let value = field.value;
+      if (field.key === "languages") {
+        value = JSON.parse(field.value);
+      }
+      result[field.key] = value;
     }
   });
   return result;

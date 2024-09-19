@@ -23,6 +23,7 @@ import z from "zod";
 import { useIsPending } from "~/utils/misc";
 import { getFormProps, useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
+import { LanguagesWrapper } from "~/components/LanguagesWrapper";
 
 const validLanguages = [
   "English",
@@ -48,7 +49,7 @@ const MemberData = z.object({
   profile: z.boolean().nullable().optional(),
   profile_photo: z.string().optional().nullable().optional(),
   open_to_work: z.boolean().nullable().optional(),
-  languages: z.array(z.enum(validLanguages)).nullable().optional(),
+  languages: z.array(z.string()).nullable().optional(),
   working_hours: z.string().nullable().optional(),
 });
 
@@ -97,7 +98,6 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 export default function MemberDashboard() {
   const fetcher = useFetcher();
   const loaderData = useLoaderData<typeof loader>();
-  console.log(loaderData);
   const actionData = useActionData<typeof action>();
   const isPending = useIsPending();
 
@@ -106,7 +106,6 @@ export default function MemberDashboard() {
     lastResult: actionData,
     defaultValue: loaderData.member,
     onValidate({ formData }) {
-      console.log("validating");
       return parseWithZod(formData, { schema: MemberData });
     },
     shouldRevalidate: "onBlur",
@@ -154,6 +153,13 @@ export default function MemberDashboard() {
                   value={working_hours.value}
                   onChange={working_hours.change}
                 />
+                <LanguagesWrapper
+                  name={fields.languages.name}
+                  value={languages.value}
+                  onChange={languages.change}
+                  validLanguages={validLanguages}
+                />
+
                 <Button loading={isPending} submit variant={"primary"}>
                   Update
                 </Button>
