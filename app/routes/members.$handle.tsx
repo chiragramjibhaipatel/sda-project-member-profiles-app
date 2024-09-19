@@ -1,83 +1,167 @@
-import {Button, Card, FormLayout, Layout, Page, TextField} from "@shopify/polaris";
+import {
+  Button,
+  Card,
+  FormLayout,
+  Layout,
+  Page,
+  TextField,
+} from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
-import React, {useState} from "react";
-import {json, LoaderFunctionArgs, redirect} from "@remix-run/node";
-import {unauthenticated} from "~/shopify.server";
-import {getMemberByHandle, updateMember} from "~/utils/utils.server";
-import {Form, useFetcher, useLoaderData} from "@remix-run/react";
-import {sessionStorage} from "~/session.server";
+import React from "react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { unauthenticated } from "~/shopify.server";
+import { getMemberByHandle, updateMember } from "~/utils/utils.server";
+import {
+  Form,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+} from "@remix-run/react";
+import { sessionStorage } from "~/session.server";
+import z from "zod";
+import { useIsPending } from "~/utils/misc";
+import { getFormProps, useForm, useInputControl } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
 
+const validLanguages = [
+  "English",
+  "Punjabi",
+  "Dutch",
+  "French",
+  "Spanish",
+  "Mandarin Chinese",
+  "Gujarati",
+  "Hindi",
+  "Russian",
+  "Turkish",
+  "Azerbaijani",
+  "Polish",
+  "German",
+  "Greek",
+] as const;
 
-export const loader = async ({params, request}: LoaderFunctionArgs) => {
-    
-    const {handle} = params;
-    const cookieSession = await sessionStorage.getSession (
-	request.headers.get ('cookie'),
-    )
-    const handleInCookie = cookieSession.get ('handle')
-    if (!handleInCookie || handleInCookie !== handle) {
-	return redirect ('/members/login', {headers: {'Set-Cookie': await sessionStorage.destroySession(cookieSession)}});
-    }
-    
-    if (!handle) {
-	return json ({member: null});
-    }
-    const {admin} = await unauthenticated.admin (process.env.SHOP);
-    let member = await getMemberByHandle ({admin, handle});
-    return json ({member});
-}
+const MemberData = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  profile: z.boolean().nullable().optional(),
+  profile_photo: z.string().optional().nullable().optional(),
+  open_to_work: z.boolean().nullable().optional(),
+  languages: z.array(z.enum(validLanguages)).nullable().optional(),
+  working_hours: z.string().nullable().optional(),
+});
 
-export const action = async ({request}: LoaderFunctionArgs) => {
-    const formData = await request.json();
-    const cookieSession = await sessionStorage.getSession (
-	request.headers.get ('cookie'),
-    )
-    const handle = cookieSession.get ('handle');
-    if (!handle) {
-	return redirect ('/members/login', {headers: {'Set-Cookie': await sessionStorage.destroySession(cookieSession)}});
-    }
-    const {admin} = await unauthenticated.admin (process.env.SHOP);
-    const {name, working_hours, id} = formData;
-    await updateMember ({admin, id, handle, name, working_hours});
-    return redirect (`/members/${handle}`);
-}
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const { handle } = params;
+  const cookieSession = await sessionStorage.getSession(
+    request.headers.get("cookie"),
+  );
+  const handleInCookie = cookieSession.get("handle");
+  if (!handleInCookie || handleInCookie !== handle) {
+    return redirect("/members/login", {
+      headers: {
+        "Set-Cookie": await sessionStorage.destroySession(cookieSession),
+      },
+    });
+  }
 
+  if (!handle) {
+    return json({ member: null });
+  }
+  const { admin } = await unauthenticated.admin(process.env.SHOP);
+  let member: z.infer<typeof MemberData> = await getMemberByHandle({
+    admin,
+    handle,
+  });
+  return json({ member });
+};
 
-export default function MembersLogin () {
-    const fetcher = useFetcher();
-    const {member} = useLoaderData<typeof loader> ();
-    
-    const [updatedMember, setUpdatedMember] = useState(member);
-    const handleMemberChange = (value: string, field: string) => {
-	setUpdatedMember ((prevState: typeof member) => {
-	    return {...prevState, [field]: {value}};
-	});
-    }
-    
-    const handleLogout = async () => {
-	fetcher.submit({}, {method: 'post', action: '/members/logout'});
-    }
-    
-    const handleMemberUpdate = () => {
-	fetcher.submit(updatedMember, {method: 'post', encType: 'application/json'});
-    };
-    return (
-	<Page title={`Hello ${updatedMember.name.value} 👋`} fullWidth={false} primaryAction={{content: "Logout", onAction: handleLogout}}>
-	    <Layout>
-		<Layout.Section variant={"oneHalf"}>
-		    <Card>
-			<Form id="member-form">
-			
-			<FormLayout>
-			    <TextField name="name" id="name" label={"Name"} value={updatedMember.name.value} autoComplete={"off"} requiredIndicator={true} onChange={handleMemberChange}/>
-			    <TextField name="email" id="email" label={"Email"} value={updatedMember.email.value} autoComplete={"off"} requiredIndicator={true} readOnly/>
-			    <TextField id="working_hours" label="Working Hours" autoComplete={"off"} value={updatedMember.working_hours.value} onChange={handleMemberChange}/>
-			    <Button variant={"primary"} onClick={handleMemberUpdate}>Update</Button>
-			</FormLayout>
-			</Form>
-		    </Card>
-		</Layout.Section>
-	    </Layout>
-	</Page>
-    );
+export const action = async ({ request }: LoaderFunctionArgs) => {
+  const formData = await request.formData();
+  const { admin } = await unauthenticated.admin(process.env.SHOP);
+
+  const submission = parseWithZod(formData, {
+    schema: MemberData,
+  });
+
+  if (submission.status !== "success") {
+    return json(submission.reply());
+  }
+
+  const { id, ...fields } = submission.value;
+  await updateMember({ admin, id, fields });
+  return new Response("", { status: 200 });
+};
+
+export default function MemberDashboard() {
+  const fetcher = useFetcher();
+  const loaderData = useLoaderData<typeof loader>();
+  console.log(loaderData);
+  const actionData = useActionData<typeof action>();
+  const isPending = useIsPending();
+
+  const [form, fields] = useForm({
+    id: "member-form",
+    lastResult: actionData,
+    defaultValue: loaderData.member,
+    onValidate({ formData }) {
+      console.log("validating");
+      return parseWithZod(formData, { schema: MemberData });
+    },
+    shouldRevalidate: "onBlur",
+  });
+
+  const name = useInputControl(fields.name);
+  const email = useInputControl(fields.email);
+  const working_hours = useInputControl(fields.working_hours);
+  const languages = useInputControl(fields.languages);
+
+  const handleLogout = async () => {
+    fetcher.submit({}, { method: "post", action: "/members/logout" });
+  };
+
+  return (
+    <Page
+      title={`Hello ${name.value}👋`}
+      fullWidth={false}
+      primaryAction={{ content: "Logout", onAction: handleLogout }}
+    >
+      <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
+        <Layout>
+          <Layout.Section variant={"oneHalf"}>
+            <Card>
+              <FormLayout>
+                <input type="hidden" name="id" value={fields.id.value} />
+                <TextField
+                  label={"Name"}
+                  value={name.value}
+                  onChange={name.change}
+                  autoComplete={"off"}
+                  requiredIndicator={true}
+                  error={fields.name.errors}
+                />
+                <TextField
+                  label={"Email"}
+                  value={email.value}
+                  autoComplete={"off"}
+                  requiredIndicator={true}
+                  readOnly
+                />
+                <TextField
+                  label="Working Hours"
+                  autoComplete={"off"}
+                  value={working_hours.value}
+                  onChange={working_hours.change}
+                />
+                <Button loading={isPending} submit variant={"primary"}>
+                  Update
+                </Button>
+              </FormLayout>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Form>
+    </Page>
+  );
 }

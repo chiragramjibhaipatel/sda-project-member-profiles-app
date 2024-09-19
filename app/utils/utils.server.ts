@@ -1,12 +1,15 @@
 import bcrypt from "bcryptjs";
-import type {AdminApiContext} from "@shopify/shopify-app-remix/server";
+import type { AdminApiContext } from "@shopify/shopify-app-remix/server";
 
-export const createHashedPassword = async ({password}: { password: string; }) => {
-    const salt = await bcrypt.genSalt (10);
-    const hashedPassword = await bcrypt.hash (password, salt);
-    return {hashedPassword};
+export const createHashedPassword = async ({
+  password,
+}: {
+  password: string;
+}) => {
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  return { hashedPassword };
 };
-
 
 const CURRENT_APP_INSTALLATION = `#graphql
 query {
@@ -33,7 +36,7 @@ mutation MetafieldsSet($metafields: MetafieldsSetInput!){
         }
     }
 }
-`
+`;
 
 const CREATE_MEMBER = `#graphql
 mutation Metaobjectreate($metaobject: MetaobjectCreateInput!){
@@ -48,7 +51,7 @@ mutation Metaobjectreate($metaobject: MetaobjectCreateInput!){
         }
     }
 }
-`
+`;
 
 const GET_MEMBER_PASSWORD_BY_EMAIL = `#graphql
 query getAppInstallation($key: String!){
@@ -58,25 +61,19 @@ query getAppInstallation($key: String!){
         }
     }
 }
-`
+`;
 
 const GET_MEMBER_BY_HANDLE = `#graphql
 query GetMemner($handle: MetaobjectHandleInput!){
     metaobjectByHandle(handle:$handle){
         id
-        name: field(key:"name"){
-            value
-        }
-        email: field(key:"email"){
-            value
-        }
-        working_hours: field(key:"working_hours"){
-            value
+        fields{
+	    key
+	    value
         }
     }
 }
-`
-
+`;
 
 const UPDATE_METAOBJECT = `#graphql
     mutation UpdateMetaobject($id: ID!, $metaobject: MetaobjectUpdateInput!) {
@@ -88,124 +85,207 @@ const UPDATE_METAOBJECT = `#graphql
 	    }
 	}
     }
-`
+`;
 export const getAppInstallationId = async (admin: AdminApiContext) => {
-    try {
-	const response = await admin.graphql (CURRENT_APP_INSTALLATION)
-	const {data: {currentAppInstallation: {id}}} = await response.json ();
-	return {id};
-    } catch (e) {
-	console.error (e)
-	throw new Error ("Something went wrong while fetching the app installation id");
-    }
-    
-    
+  try {
+    const response = await admin.graphql(CURRENT_APP_INSTALLATION);
+    const {
+      data: {
+        currentAppInstallation: { id },
+      },
+    } = await response.json();
+    return { id };
+  } catch (e) {
+    console.error(e);
+    throw new Error(
+      "Something went wrong while fetching the app installation id",
+    );
+  }
 };
-export const storeHashedPassword = async ({appInstallationId: ownerId, hashedPassword, email: key, handle, admin}: { appInstallationId: any; hashedPassword: string; admin: AdminApiContext; email: string; handle: string }) => {
-    const namespace = "sda_member_hashed_password";
-    const type = "json";
-    const response = await admin.graphql (SAVE_HASHED_PASSWORD, {
-	variables: {
-	    metafields: {
-		ownerId,
-		namespace,
-		key,
-		value: JSON.stringify ({handle, hashedPassword}),
-		type
-	    }
-	}
+export const storeHashedPassword = async ({
+  appInstallationId: ownerId,
+  hashedPassword,
+  email: key,
+  handle,
+  admin,
+}: {
+  appInstallationId: any;
+  hashedPassword: string;
+  admin: AdminApiContext;
+  email: string;
+  handle: string;
+}) => {
+  const namespace = "sda_member_hashed_password";
+  const type = "json";
+  const response = await admin.graphql(SAVE_HASHED_PASSWORD, {
+    variables: {
+      metafields: {
+        ownerId,
+        namespace,
+        key,
+        value: JSON.stringify({ handle, hashedPassword }),
+        type,
+      },
+    },
+  });
+  const {
+    data: {
+      metafieldsSet: { userErrors },
+    },
+  } = await response.json();
+  if (userErrors.length > 0) {
+    throw new Error("Something went wrong while storing the hashed password");
+  }
+};
+export const createMember = async ({
+  role,
+  name,
+  email,
+  admin,
+}: {
+  role: string;
+  name: string;
+  admin: AdminApiContext;
+  email: string;
+}) => {
+  const response = await admin.graphql(CREATE_MEMBER, {
+    variables: {
+      metaobject: {
+        type: "member_profile",
+        fields: [
+          {
+            key: "name",
+            value: name,
+          },
+          {
+            key: "email",
+            value: email,
+          },
+          {
+            key: "role",
+            value: role,
+          },
+        ],
+      },
+    },
+  });
+  const {
+    data: {
+      metaobjectCreate: { metaobject, userErrors },
+    },
+  } = await response.json();
+  if (userErrors.length > 0) {
+    throw new Error("Something went wrong while creating the member");
+  }
+  return { handle: metaobject.handle };
+};
+export const validateLogin = async ({
+  admin,
+  username,
+  password,
+}: {
+  password: string;
+  admin: AdminApiContext;
+  username: string;
+}) => {
+  try {
+    const response = await admin.graphql(GET_MEMBER_PASSWORD_BY_EMAIL, {
+      variables: {
+        key: username,
+      },
     });
-    const {data: {metafieldsSet: {userErrors}}} = await response.json ();
-    if (userErrors.length > 0) {
-	throw new Error ("Something went wrong while storing the hashed password");
+    const {
+      data: {
+        currentAppInstallation: { metafield },
+      },
+    } = await response.json();
+    if (!metafield) {
+      return { isValidLogin: false };
     }
-};
-export const createMember = async ({role, name, email, admin}: { role: string; name: string; admin: AdminApiContext; email: string }) => {
-    const response = await admin.graphql (CREATE_MEMBER, {
-	variables: {
-	    "metaobject": {
-		"type": "member_profile",
-		"fields": [
-		    {
-			"key": "name",
-			"value": name
-		    },
-		    {
-			"key": "email",
-			"value": email
-		    },
-		    {
-			"key": "role",
-			"value": role
-		    }
-		]
-	    }
-	}
-    });
-    const {data: {metaobjectCreate: {metaobject, userErrors}}} = await response.json ();
-    if (userErrors.length > 0) {
-	throw new Error ("Something went wrong while creating the member");
+    const { handle, hashedPassword } = JSON.parse(metafield.value);
+    if (!hashedPassword || !handle) {
+      return { isValidLogin: false };
     }
-    return {handle: metaobject.handle};
-    
-};
-export const validateLogin = async ({admin, username, password}: { password: string; admin: AdminApiContext; username: string }) => {
-    try {
-	const response = await admin.graphql (GET_MEMBER_PASSWORD_BY_EMAIL, {
-	    variables: {
-		key: username
-	    }
-	});
-	const {data: {currentAppInstallation: {metafield}}} = await response.json ();
-	if(!metafield){
-	    return {isValidLogin: false};
-	}
-	const {handle, hashedPassword} = JSON.parse (metafield.value);
-	if (!hashedPassword || !handle) {
-	    return {isValidLogin: false};
-	}
-	return {
-	    isValidLogin: await bcrypt.compare (password, hashedPassword),
-	    handle
-	}
-    } catch (e) {
-	console.error (e);
-	return {isValidLogin: false};
-    }
+    return {
+      isValidLogin: await bcrypt.compare(password, hashedPassword),
+      handle,
+    };
+  } catch (e) {
+    console.error(e);
+    return { isValidLogin: false };
+  }
 };
 
-export const getMemberByHandle = async ({admin, handle}: { admin: AdminApiContext; handle: string }) => {
-    const response = await admin.graphql (GET_MEMBER_BY_HANDLE, {
-	variables: {
-	    handle: {
-		type: "member_profile",
-		handle
-	    }
-	}
-    });
-    const {data: {metaobjectByHandle: {id, name, email, working_hours}}} = await response.json ();
-    
-    return {id, name, email, working_hours};
+export const getMemberByHandle = async ({
+  admin,
+  handle,
+}: {
+  admin: AdminApiContext;
+  handle: string;
+}) => {
+  const response = await admin.graphql(GET_MEMBER_BY_HANDLE, {
+    variables: {
+      handle: {
+        type: "member_profile",
+        handle,
+      },
+    },
+  });
+  const {
+    data: { metaobjectByHandle },
+  } = await response.json();
+  const { id, fields }: { id: string; fields: [{ key: string; value: any }] } =
+    metaobjectByHandle;
+  const member = convertInputToJSONObjectFormat({ fields });
+  //check if the member has these fields: name, role, email
+  if (!member.name || !member.email || !member.email) {
+    throw new Error("Member does not have the required fields");
+  }
+  console.log("Member...id", { id, ...member });
+  return { id, ...member };
+};
+
+export const updateMember = async ({
+  id,
+  fields,
+  admin,
+}: {
+  id: string;
+  fields: { [key: string]: any };
+  admin: AdminApiContext;
+}) => {
+  console.log("Update Member...id", { id, fields });
+  const input = convertInputToGqlFormat(fields);
+  console.log("Update Member...id", { id, input });
+  const variables = {
+    id,
+    metaobject: {
+      fields: input,
+    },
+  };
+  console.dir({ variables }, { depth: null });
+  await admin.graphql(UPDATE_METAOBJECT, {
+    variables,
+  });
+};
+
+function convertInputToGqlFormat(input: { [key: string]: any }) {
+  return Object.keys(input).map((key) => ({
+    key: key,
+    value: input[key],
+  }));
 }
 
-export const updateMember = async ({handle, id, name, working_hours, admin}: {id:string; working_hours: any; name: any; admin: AdminApiContext; handle: any }) => {
-    console.log("Updating member", {handle, id, name, working_hours});
-	const input = convertInput({name, working_hours});
-	await admin.graphql (UPDATE_METAOBJECT, {
-	    variables: {
-		id,
-		metaobject: {
-		    fields: input
-		}
-	    }
-	});
-	
-};
-
-
-function convertInput(input) {
-    return Object.keys(input).map(key => ({
-	key: key,
-	value: input[key].value
-    }));
+function convertInputToJSONObjectFormat({
+  fields,
+}: {
+  fields: [{ key: string; value: any }];
+}) {
+  const result = {} as { [key: string]: any };
+  fields.forEach((field) => {
+    if (field.value !== null) {
+      result[field.key] = field.value;
+    }
+  });
+  return result;
 }
