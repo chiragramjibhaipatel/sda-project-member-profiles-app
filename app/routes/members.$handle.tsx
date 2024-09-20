@@ -2,6 +2,7 @@ import {
   Button,
   Card,
   FormLayout,
+  InlineError,
   Layout,
   Page,
   TextField,
@@ -12,18 +13,14 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { unauthenticated } from "~/shopify.server";
 import { getMemberByHandle, updateMember } from "~/utils/utils.server";
-import {
-  Form,
-  useActionData,
-  useFetcher,
-  useLoaderData,
-} from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { sessionStorage } from "~/session.server";
 import z from "zod";
 import { useIsPending } from "~/utils/misc";
 import { getFormProps, useForm, useInputControl } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { LanguagesWrapper } from "~/components/LanguagesWrapper";
+import { LogoutForm } from "~/components/LogoutForm";
 
 const validLanguages = [
   "English",
@@ -44,10 +41,12 @@ const validLanguages = [
 
 const MemberData = z.object({
   id: z.string(),
-  name: z.string().min(1),
-  email: z.string().email(),
+  name: z.string({ required_error: "Name is required" }),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email({ message: "Invalid email" }),
   profile: z.boolean().nullable().optional(),
-  profile_photo: z.string().optional().nullable().optional(),
+  profile_photo: z.string().optional().nullable(),
   open_to_work: z.boolean().nullable().optional(),
   languages: z.array(z.string()).nullable().optional(),
   working_hours: z.string().nullable().optional(),
@@ -91,12 +90,17 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const { id, ...fields } = submission.value;
-  await updateMember({ admin, id, fields });
-  return new Response("", { status: 200 });
+  try {
+    await updateMember({ admin, id, fields });
+    return new Response("", { status: 200 });
+  } catch (e) {
+    return submission.reply({
+      formErrors: ["Failed to save changes...", "Manual Error"],
+    });
+  }
 };
 
 export default function MemberDashboard() {
-  const fetcher = useFetcher();
   const loaderData = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const isPending = useIsPending();
@@ -105,10 +109,12 @@ export default function MemberDashboard() {
     id: "member-form",
     lastResult: actionData,
     defaultValue: loaderData.member,
+    constraint: getZodConstraint(MemberData),
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: MemberData });
     },
-    shouldRevalidate: "onBlur",
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
   });
 
   const name = useInputControl(fields.name);
@@ -116,15 +122,11 @@ export default function MemberDashboard() {
   const working_hours = useInputControl(fields.working_hours);
   const languages = useInputControl(fields.languages);
 
-  const handleLogout = async () => {
-    fetcher.submit({}, { method: "post", action: "/members/logout" });
-  };
-
   return (
     <Page
       title={`Hello ${name.value}👋`}
       fullWidth={false}
-      primaryAction={{ content: "Logout", onAction: handleLogout }}
+      primaryAction={<LogoutForm />}
     >
       <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
         <Layout>
@@ -163,6 +165,10 @@ export default function MemberDashboard() {
                 <Button loading={isPending} submit variant={"primary"}>
                   Update
                 </Button>
+                <InlineError
+                  fieldID={form.errorId}
+                  message={form.errors?.join() || ""}
+                />
               </FormLayout>
             </Card>
           </Layout.Section>

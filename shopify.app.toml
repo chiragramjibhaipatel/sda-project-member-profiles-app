@@ -3,7 +3,7 @@
 client_id = "dd66f08b30615f45c7db778b5f4bd59c"
 name = "member-profile-dev"
 handle = "member-profile-dev"
-application_url = "https://radar-why-keyboards-layers.trycloudflare.com"
+application_url = "https://plaza-attract-timely-revisions.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_metaobjects"
 
 [auth]
 redirect_urls = [
-  "https://radar-why-keyboards-layers.trycloudflare.com/auth/callback",
-  "https://radar-why-keyboards-layers.trycloudflare.com/auth/shopify/callback",
-  "https://radar-why-keyboards-layers.trycloudflare.com/api/auth/callback"
+  "https://plaza-attract-timely-revisions.trycloudflare.com/auth/callback",
+  "https://plaza-attract-timely-revisions.trycloudflare.com/auth/shopify/callback",
+  "https://plaza-attract-timely-revisions.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
