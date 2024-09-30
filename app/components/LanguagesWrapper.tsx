@@ -2,6 +2,7 @@ import {
   BlockStack,
   Combobox,
   Icon,
+  InlineError,
   InlineStack,
   Listbox,
   Tag,
@@ -65,7 +66,12 @@ export function LanguagesWrapper({
         value = [...selectedOptions, selected];
         setSelectedOptions(value);
       }
-      languagesInput.change(value);
+      console.log("value", value);
+      if (value.length === 0) {
+        languagesInput.change("");
+      } else {
+        languagesInput.change(value);
+      }
       updateText("");
     },
     [selectedOptions, updateText],
@@ -76,7 +82,11 @@ export function LanguagesWrapper({
       const options = [...selectedOptions];
       options.splice(options.indexOf(tag), 1);
       setSelectedOptions(options);
-      languagesInput.change(options);
+      if (options.length === 0) {
+        languagesInput.change("");
+      } else {
+        languagesInput.change(options);
+      }
     },
     [selectedOptions],
   );
@@ -126,6 +136,7 @@ export function LanguagesWrapper({
           ) : null}
         </Combobox>
         <InlineStack gap={"200"}>{tagsMarkup}</InlineStack>
+        <InlineError message={meta.errors} fieldID={meta.errorId} />
       </BlockStack>
     </>
   );

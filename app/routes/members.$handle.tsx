@@ -31,6 +31,7 @@ import { LogoutForm } from "~/components/LogoutForm";
 import { ProfilePhoto } from "~/components/ProfilePhoto";
 import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
 import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
+import { LinksWrapper } from "~/components/LinksWrapper";
 
 const validLanguages = [
   "English",
@@ -64,8 +65,17 @@ const MemberData = z.object({
     .string({ required_error: "Email is required" })
     .email({ message: "Invalid email" }),
   profile_photo: z.string().optional().nullable(),
-  languages: z.array(z.string()).optional(),
+  languages: z.preprocess(
+    (val) => (val === undefined ? "" : val),
+    z.array(z.string()).optional().or(z.string().optional()),
+  ),
   working_hours: z.string().optional(),
+  website: z.string().url().optional(),
+  twitter: z.string().url().optional(),
+  linked_in: z.string().url().optional(),
+  github: z.string().url().optional(),
+  you_tube: z.string().url().optional(),
+  alternative_contact: z.string().optional(),
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -92,6 +102,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
   const result = MemberData.safeParse(member);
   if (!result.success) {
+    console.error(result.error);
     return json({ member: null });
   }
   return json({ member: result.data });
@@ -124,6 +135,7 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 
 export default function MemberDashboard() {
   const loaderData = useLoaderData<typeof loader>();
+  console.log("loaderData", loaderData);
   const actionData = useActionData<typeof action>();
   const isPending = useIsPending();
 
@@ -187,7 +199,14 @@ export default function MemberDashboard() {
                   </FormLayout>
                 </Card>
                 <Card>
-                  <FormLayout></FormLayout>
+                  <LinksWrapper
+                    website={fields.website.name}
+                    twitter={fields.twitter.name}
+                    linked_in={fields.linked_in.name}
+                    github={fields.github.name}
+                    you_tube={fields.you_tube.name}
+                    alternative_contact={fields.alternative_contact.name}
+                  />
                 </Card>
               </BlockStack>
             </Layout.Section>

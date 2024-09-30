@@ -267,11 +267,12 @@ export const updateMember = async ({
 
 function convertInputToGqlFormat(input: { [key: string]: any }) {
   return Object.keys(input).map((key) => {
+    console.log("key", key, "value: ", input[key], "type: ", typeof input[key]);
     let value = input[key];
     value = typeof value !== "string" ? JSON.stringify(value) : value;
     return {
       key: key,
-      value: value,
+      value: value || "",
     };
   });
 }
