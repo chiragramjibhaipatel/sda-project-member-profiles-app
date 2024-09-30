@@ -1,4 +1,5 @@
 import {
+  BlockStack,
   Button,
   Card,
   FormLayout,
@@ -29,6 +30,7 @@ import { LanguagesWrapper } from "~/components/LanguagesWrapper";
 import { LogoutForm } from "~/components/LogoutForm";
 import { ProfilePhoto } from "~/components/ProfilePhoto";
 import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
+import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
 
 const validLanguages = [
   "English",
@@ -55,7 +57,9 @@ const MemberData = z.object({
   profile: z
     .preprocess((val) => val === "on" || val == true, z.boolean().optional())
     .optional(),
-  open_to_work: z.coerce.boolean().optional(),
+  open_to_work: z
+    .preprocess((val) => val === "on" || val == true, z.boolean().optional())
+    .optional(),
   email: z
     .string({ required_error: "Email is required" })
     .email({ message: "Invalid email" }),
@@ -183,9 +187,20 @@ export default function MemberDashboard() {
               </Card>
             </Layout.Section>
             <Layout.Section variant={"oneThird"}>
-              <Card roundedAbove="sm">
-                <ProfileVisibilityToggle profile={fields.profile.name} />p
-              </Card>
+              <BlockStack gap={"400"}>
+                <Card roundedAbove="sm">
+                  <ProfileVisibilityToggle profile={fields.profile.name} />
+                </Card>
+                <Card>
+                  <OpenToWorkToggle openToWork={fields.open_to_work.name} />
+                </Card>
+                <Card>
+                  <LanguagesWrapper
+                    languages={fields.languages.name}
+                    validLanguages={validLanguages}
+                  />
+                </Card>
+              </BlockStack>
             </Layout.Section>
           </Layout>
 
@@ -207,10 +222,6 @@ export default function MemberDashboard() {
                     autoComplete={"off"}
                     value={working_hours.value}
                     onChange={working_hours.change}
-                  />
-                  <LanguagesWrapper
-                    languages={fields.languages.name}
-                    validLanguages={validLanguages}
                   />
 
                   <Button loading={isPending} submit variant={"primary"}>
