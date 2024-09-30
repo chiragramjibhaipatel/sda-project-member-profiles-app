@@ -65,7 +65,7 @@ const MemberData = z.object({
     .email({ message: "Invalid email" }),
   profile_photo: z.string().optional().nullable(),
   languages: z.array(z.string()).optional(),
-  working_hours: z.string().nullable().optional(),
+  working_hours: z.string().optional(),
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -141,7 +141,6 @@ export default function MemberDashboard() {
   const tagline = useInputControl(fields.tagline);
   const description = useInputControl(fields.description);
   const email = useInputControl(fields.email);
-  const working_hours = useInputControl(fields.working_hours);
 
   return (
     <Page
@@ -153,38 +152,44 @@ export default function MemberDashboard() {
         <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
           <Layout>
             <Layout.Section>
-              <Card>
-                <FormLayout>
-                  <InlineGrid gap={"400"} columns={["oneThird", "twoThirds"]}>
-                    <ProfilePhoto />
-                    <FormLayout>
-                      <TextField
-                        label={"Name"}
-                        value={name.value}
-                        onChange={name.change}
-                        autoComplete={"off"}
-                        requiredIndicator={true}
-                        error={fields.name.errors}
-                      />
-                      <TextField
-                        label={"Tagline"}
-                        value={tagline.value}
-                        onChange={tagline.change}
-                        autoComplete={"off"}
-                        error={fields.tagline.errors}
-                      />
-                    </FormLayout>
-                  </InlineGrid>
-                  <TextField
-                    label={"Description"}
-                    autoComplete={"off"}
-                    multiline={4}
-                    value={description.value}
-                    onChange={description.change}
-                    error={fields.description.errors}
-                  />
-                </FormLayout>
-              </Card>
+              <BlockStack gap={"400"}>
+                <Card>
+                  <FormLayout>
+                    <InlineGrid gap={"400"} columns={["oneThird", "twoThirds"]}>
+                      <ProfilePhoto />
+                      <FormLayout>
+                        <TextField
+                          label={"Name"}
+                          value={name.value}
+                          onChange={name.change}
+                          autoComplete={"off"}
+                          requiredIndicator={true}
+                          error={fields.name.errors}
+                        />
+                        <TextField
+                          label={"Tagline"}
+                          value={tagline.value}
+                          onChange={tagline.change}
+                          autoComplete={"off"}
+                          error={fields.tagline.errors}
+                          multiline={2}
+                        />
+                      </FormLayout>
+                    </InlineGrid>
+                    <TextField
+                      label={"Description"}
+                      autoComplete={"off"}
+                      multiline={4}
+                      value={description.value}
+                      onChange={description.change}
+                      error={fields.description.errors}
+                    />
+                  </FormLayout>
+                </Card>
+                <Card>
+                  <FormLayout></FormLayout>
+                </Card>
+              </BlockStack>
             </Layout.Section>
             <Layout.Section variant={"oneThird"}>
               <BlockStack gap={"400"}>
@@ -192,7 +197,10 @@ export default function MemberDashboard() {
                   <ProfileVisibilityToggle profile={fields.profile.name} />
                 </Card>
                 <Card>
-                  <OpenToWorkToggle openToWork={fields.open_to_work.name} />
+                  <OpenToWorkToggle
+                    openToWork={fields.open_to_work.name}
+                    workingHours={fields.working_hours.name}
+                  />
                 </Card>
                 <Card>
                   <LanguagesWrapper
@@ -216,12 +224,6 @@ export default function MemberDashboard() {
                     autoComplete={"off"}
                     requiredIndicator={true}
                     readOnly
-                  />
-                  <TextField
-                    label="Working Hours"
-                    autoComplete={"off"}
-                    value={working_hours.value}
-                    onChange={working_hours.change}
                   />
 
                   <Button loading={isPending} submit variant={"primary"}>

@@ -6,28 +6,45 @@ import {
   InlineError,
   InlineStack,
   Text,
+  TextField,
 } from "@shopify/polaris";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 
 export function OpenToWorkToggle({
   openToWork,
+  workingHours,
 }: {
   openToWork: FieldName<boolean>;
+  workingHours: FieldName<string>;
 }) {
-  const [meta] = useField(openToWork);
-  const profileInput = useInputControl(meta);
-  const [enabled, setEnabled] = useState(profileInput.value || false);
+  const [metaOpenToWork] = useField(openToWork);
+  const metaOpenToWorkInput = useInputControl(metaOpenToWork);
+  const [enabled, setEnabled] = useState(metaOpenToWorkInput.value || false);
+
+  const [metaWorkingHours] = useField(workingHours);
+  const workingHoursInput = useInputControl(metaWorkingHours);
+  const [workingHoursInputValue, setWorkingHoursInputValue] = useState(
+    workingHoursInput.value || "",
+  );
+
+  const handleWorkingHoursChange = useCallback(
+    (value) => {
+      setWorkingHoursInputValue(value);
+      workingHoursInput.change(value);
+    },
+    [workingHoursInput],
+  );
 
   const handleToggle = useCallback(
     () =>
       setEnabled((enabled) => {
         const newEnabled = !enabled;
-        profileInput.change(newEnabled ? "on" : "off");
+        metaOpenToWorkInput.change(newEnabled ? "on" : "off");
         return newEnabled;
       }),
-    [profileInput],
+    [metaOpenToWorkInput],
   );
 
   const contentStatus = enabled ? "No" : "Yes";
@@ -92,10 +109,20 @@ export function OpenToWorkToggle({
       <Box width="100%">
         <BlockStack gap={{ xs: "200", sm: "400" }}>{headerMarkup}</BlockStack>
       </Box>
+      <TextField
+        label="Working Hours"
+        autoComplete={"off"}
+        onChange={handleWorkingHoursChange}
+        value={workingHoursInputValue}
+        error={metaWorkingHours.errors}
+      />
       <Text variant="bodyMd" as="p">
         Your profile will be visible to employers when you are open to work.
       </Text>
-      <InlineError message={meta.errors?.join(",")} fieldID={meta.errorId} />
+      <InlineError
+        message={metaOpenToWork.errors?.join(",")}
+        fieldID={metaOpenToWork.errorId}
+      />
     </BlockStack>
   );
 }

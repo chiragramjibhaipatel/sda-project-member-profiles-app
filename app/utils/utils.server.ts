@@ -234,6 +234,7 @@ export const getMemberByHandle = async ({
   const {
     data: { metaobjectByHandle },
   } = await response.json();
+  console.log("From Shopify: metaobjectByHandle", metaobjectByHandle);
   const {
     id,
     fields,
