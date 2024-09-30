@@ -69,7 +69,7 @@ query GetMemner($handle: MetaobjectHandleInput!){
         id
         fields{
             key
-            value
+            jsonValue
         }
     }
 }
@@ -234,14 +234,12 @@ export const getMemberByHandle = async ({
   const {
     data: { metaobjectByHandle },
   } = await response.json();
-  const { id, fields }: { id: string; fields: [{ key: string; value: any }] } =
+  const {
+    id,
+    fields,
+  }: { id: string; fields: [{ key: string; jsonValue: any }] } =
     metaobjectByHandle;
   const member = convertInputToJSONObjectFormat({ fields });
-  //check if the member has these fields: name, role, email
-  if (!member.name || !member.email || !member.email) {
-    throw new Error("Member does not have the required fields");
-  }
-  console.log("Member...id", { id, ...member });
   return { id, ...member };
 };
 
@@ -254,16 +252,13 @@ export const updateMember = async ({
   fields: { [key: string]: any };
   admin: AdminApiContext;
 }) => {
-  console.log("Update Member...id", { id, fields });
   const input = convertInputToGqlFormat(fields);
-  console.log("Update Member...id", { id, input });
   const variables = {
     id,
     metaobject: {
       fields: input,
     },
   };
-  console.dir({ variables }, { depth: null });
   await admin.graphql(UPDATE_METAOBJECT, {
     variables,
   });
@@ -272,9 +267,7 @@ export const updateMember = async ({
 function convertInputToGqlFormat(input: { [key: string]: any }) {
   return Object.keys(input).map((key) => {
     let value = input[key];
-    if (key === "languages") {
-      value = JSON.stringify(value);
-    }
+    value = typeof value !== "string" ? JSON.stringify(value) : value;
     return {
       key: key,
       value: value,
@@ -285,16 +278,12 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
 function convertInputToJSONObjectFormat({
   fields,
 }: {
-  fields: [{ key: string; value: any }];
+  fields: [{ key: string; jsonValue: any }];
 }) {
   const result = {} as { [key: string]: any };
   fields.forEach((field) => {
-    if (field.value !== null) {
-      let value = field.value;
-      if (field.key === "languages") {
-        value = JSON.parse(field.value);
-      }
-      result[field.key] = value;
+    if (field.jsonValue !== null) {
+      result[field.key] = field.jsonValue;
     }
   });
   return result;

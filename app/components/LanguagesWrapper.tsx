@@ -9,25 +9,26 @@ import {
 
 import { SearchIcon } from "@shopify/polaris-icons";
 import { useCallback, useMemo, useState } from "react";
+import type { FieldName } from "@conform-to/dom";
+import { useField, useInputControl } from "@conform-to/react";
 
 export function LanguagesWrapper({
-  name,
-  value,
-  onChange,
+  languages,
   validLanguages,
 }: {
-  name: string;
-  value: string[];
-  onChange: (value: string[]) => void;
+  languages: FieldName<string[]>;
   validLanguages: string[];
 }) {
+  const [meta] = useField(languages);
+  const languagesInput = useInputControl(meta);
   const deselectedOptions = useMemo(
     () =>
       validLanguages.map((language) => ({ label: language, value: language })),
     [],
   );
-
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(value);
+  const [selectedOptions, setSelectedOptions] = useState(
+    languagesInput.value || [],
+  );
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState(deselectedOptions);
 
@@ -64,7 +65,7 @@ export function LanguagesWrapper({
         value = [...selectedOptions, selected];
         setSelectedOptions(value);
       }
-      onChange(value);
+      languagesInput.change(value);
       updateText("");
     },
     [selectedOptions, updateText],
@@ -75,7 +76,7 @@ export function LanguagesWrapper({
       const options = [...selectedOptions];
       options.splice(options.indexOf(tag), 1);
       setSelectedOptions(options);
-      onChange(options);
+      languagesInput.change(options);
     },
     [selectedOptions],
   );
