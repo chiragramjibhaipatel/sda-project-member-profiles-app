@@ -1,7 +1,7 @@
 import { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 import { useState } from "react";
-import { FormLayout, TextField } from "@shopify/polaris";
+import { FormLayout, TextField, Text, BlockStack } from "@shopify/polaris";
 
 export function LinksWrapper({
   website,
@@ -84,51 +84,60 @@ export function LinksWrapper({
   };
 
   return (
-    <>
+    <BlockStack gap={"400"}>
+      <Text as="h2" variant="headingLg">
+        Links
+      </Text>
       <FormLayout>
-        <TextField
-          autoComplete={"off"}
-          label="Website"
-          value={metaWebsiteInputValue}
-          onChange={handleMetaWebsiteChange}
-          error={metaWebsite.errors}
-        />
-        <TextField
-          autoComplete={"off"}
-          label="Twitter"
-          value={metaTwitterInputValue}
-          onChange={handleMetaTwitterChange}
-          error={metaTwitter.errors}
-        />
-        <TextField
-          autoComplete={"off"}
-          label="LinkedIn"
-          value={metaLinkedInInputValue}
-          onChange={handleMetaLinkedInChange}
-          error={metaLinkedIn.errors}
-        />
-        <TextField
-          autoComplete={"off"}
-          label="GitHub"
-          value={metaGitHubInputValue}
-          onChange={handleMetaGitHubChange}
-          error={metaGitHub.errors}
-        />
-        <TextField
-          autoComplete={"off"}
-          label="YouTube"
-          value={metaYouTubeInputValue}
-          onChange={handleMetaYouTubeChange}
-          error={metaYouTube.errors}
-        />
-        <TextField
-          autoComplete={"off"}
-          label="Alternative Contact"
-          value={metaAlternativeContactInputValue}
-          onChange={handleMetaAlternativeContactChange}
-          error={metaAlternativeContact.errors}
-        />
+        <FormLayout.Group condensed>
+          <TextField
+            autoComplete={"off"}
+            label="Website"
+            value={metaWebsiteInputValue}
+            onChange={handleMetaWebsiteChange}
+            error={metaWebsite.errors}
+          />
+          <TextField
+            autoComplete={"off"}
+            label="Twitter"
+            value={metaTwitterInputValue}
+            onChange={handleMetaTwitterChange}
+            error={metaTwitter.errors}
+          />
+        </FormLayout.Group>
+        <FormLayout.Group condensed>
+          <TextField
+            autoComplete={"off"}
+            label="LinkedIn"
+            value={metaLinkedInInputValue}
+            onChange={handleMetaLinkedInChange}
+            error={metaLinkedIn.errors}
+          />
+          <TextField
+            autoComplete={"off"}
+            label="GitHub"
+            value={metaGitHubInputValue}
+            onChange={handleMetaGitHubChange}
+            error={metaGitHub.errors}
+          />
+        </FormLayout.Group>
+        <FormLayout.Group condensed>
+          <TextField
+            autoComplete={"off"}
+            label="YouTube"
+            value={metaYouTubeInputValue}
+            onChange={handleMetaYouTubeChange}
+            error={metaYouTube.errors}
+          />
+          <TextField
+            autoComplete={"off"}
+            label="Alternative Contact"
+            value={metaAlternativeContactInputValue}
+            onChange={handleMetaAlternativeContactChange}
+            error={metaAlternativeContact.errors}
+          />
+        </FormLayout.Group>
       </FormLayout>
-    </>
+    </BlockStack>
   );
 }

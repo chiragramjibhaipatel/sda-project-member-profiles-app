@@ -75,7 +75,7 @@ const MemberData = z.object({
   linked_in: z.string().url().optional(),
   github: z.string().url().optional(),
   you_tube: z.string().url().optional(),
-  alternative_contact: z.string().optional(),
+  alternative_contact: z.string().url().optional(),
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
