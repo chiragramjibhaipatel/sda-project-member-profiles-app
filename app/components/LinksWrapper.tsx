@@ -1,4 +1,4 @@
-import { FieldName } from "@conform-to/dom";
+import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 import { useState } from "react";
 import { FormLayout, TextField, Text, BlockStack } from "@shopify/polaris";

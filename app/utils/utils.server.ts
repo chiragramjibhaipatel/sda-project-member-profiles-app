@@ -70,6 +70,7 @@ query GetMemner($handle: MetaobjectHandleInput!){
         fields{
             key
             jsonValue
+            type
         }
     }
 }
@@ -234,11 +235,10 @@ export const getMemberByHandle = async ({
   const {
     data: { metaobjectByHandle },
   } = await response.json();
-  console.log("From Shopify: metaobjectByHandle", metaobjectByHandle);
   const {
     id,
     fields,
-  }: { id: string; fields: [{ key: string; jsonValue: any }] } =
+  }: { id: string; fields: [{ key: string; jsonValue: any; type: string }] } =
     metaobjectByHandle;
   const member = convertInputToJSONObjectFormat({ fields });
   return { id, ...member };
@@ -253,23 +253,73 @@ export const updateMember = async ({
   fields: { [key: string]: any };
   admin: AdminApiContext;
 }) => {
-  const input = convertInputToGqlFormat(fields);
+  let input = convertInputToGqlFormat(fields);
+  input = JSON.stringify(input);
+  console.log("input", input);
   const variables = {
     id,
     metaobject: {
-      fields: input,
+      fields: { name: "testname" },
     },
   };
-  await admin.graphql(UPDATE_METAOBJECT, {
-    variables,
-  });
+  console.dir(variables, { depth: null });
+
+  // const response = await admin.graphql(UPDATE_METAOBJECT, {
+  //   variables,
+  // });
+  const response = await admin.graphql(`mutation {
+    metaobjectUpdate(
+      id: "gid://shopify/Metaobject/76185010466"
+      metaobject: {fields: {key: "name", value: "testname"}}
+    ) {
+      metaobject {
+        handle
+        fields {
+          key
+          jsonValue
+          type
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }`);
+  const {
+    data: {
+      metaobjectUpdate: { userErrors },
+    },
+  } = await response.json();
+  if (userErrors.length > 0) {
+    console.error("userErrors", userErrors);
+    throw new Error("Something went wrong while updating the member");
+  }
 };
 
+const fieldsWithRichText = [
+  "description",
+  "additional_services",
+  "skills_and_technologies_additional_notes",
+  "portfolio_sites",
+  "other_links",
+];
 function convertInputToGqlFormat(input: { [key: string]: any }) {
   return Object.keys(input).map((key) => {
-    console.log("key", key, "value: ", input[key], "type: ", typeof input[key]);
     let value = input[key];
-    value = typeof value !== "string" ? JSON.stringify(value) : value;
+    if (fieldsWithRichText.includes(key)) {
+      value = {
+        type: "root",
+        children: [
+          { type: "paragraph", children: [{ text: value, type: "text" }] },
+        ],
+      };
+      // value = JSON.stringify(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      console.log("value", value);
+    } else {
+      value = typeof value !== "string" ? JSON.stringify(value) : value;
+    }
     return {
       key: key,
       value: value || "",
@@ -277,14 +327,25 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
   });
 }
 
+//ref: https://community.shopify.com/c/metafields-and-custom-data/limited-functionality-of-rich-text-field-in-metaobjects/m-p/2130345
+//todo: this function will always return the very first value of the jsonValue array, need to have better implementation to handle this
+function getDeepFieldFromJSON(jsonValue: any) {
+  if (!jsonValue) {
+    return "";
+  }
+  return jsonValue?.children[0]?.children[0]?.value || "";
+}
+
 function convertInputToJSONObjectFormat({
   fields,
 }: {
-  fields: [{ key: string; jsonValue: any }];
+  fields: [{ key: string; jsonValue: any; type: string }];
 }) {
   const result = {} as { [key: string]: any };
   fields.forEach((field) => {
-    if (field.jsonValue !== null) {
+    if (field.type === "rich_text_field") {
+      result[field.key] = getDeepFieldFromJSON(field.jsonValue);
+    } else if (field.jsonValue !== null) {
       result[field.key] = field.jsonValue;
     }
   });
