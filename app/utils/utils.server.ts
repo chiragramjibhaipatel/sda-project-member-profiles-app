@@ -270,7 +270,7 @@ export const updateMember = async ({
   const response = await admin.graphql(`mutation {
     metaobjectUpdate(
       id: "gid://shopify/Metaobject/76185010466"
-      metaobject: {fields: {key: "name", value: "testname"}}
+      metaobject: {fields: {key: "name", value: "testname 5"}}
     ) {
       metaobject {
         handle
@@ -327,25 +327,17 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
   });
 }
 
-//ref: https://community.shopify.com/c/metafields-and-custom-data/limited-functionality-of-rich-text-field-in-metaobjects/m-p/2130345
-//todo: this function will always return the very first value of the jsonValue array, need to have better implementation to handle this
-function getDeepFieldFromJSON(jsonValue: any) {
-  if (!jsonValue) {
-    return "";
-  }
-  return jsonValue?.children[0]?.children[0]?.value || "";
-}
-
 function convertInputToJSONObjectFormat({
   fields,
 }: {
   fields: [{ key: string; jsonValue: any; type: string }];
 }) {
+  
   const result = {} as { [key: string]: any };
   fields.forEach((field) => {
-    if (field.type === "rich_text_field") {
-      result[field.key] = getDeepFieldFromJSON(field.jsonValue);
-    } else if (field.jsonValue !== null) {
+    if(field.key === "description"){
+      result[field.key] = JSON.stringify(field.jsonValue);
+    }else if (field.jsonValue !== null) {
       result[field.key] = field.jsonValue;
     }
   });

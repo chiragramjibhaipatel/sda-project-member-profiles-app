@@ -1,37 +1,25 @@
-import {
-  BlockStack,
-  Button,
-  Card,
-  FormLayout,
-  InlineError,
-  InlineGrid,
-  Layout,
-  Page,
-  TextField,
-} from "@shopify/polaris";
+import {BlockStack, Button, Card, FormLayout, InlineError, InlineGrid, Layout, Page, TextField,} from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import React from "react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { unauthenticated } from "~/shopify.server";
-import { getMemberByHandle, updateMember } from "~/utils/utils.server";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import { sessionStorage } from "~/session.server";
+import type {LoaderFunctionArgs} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
+import {unauthenticated} from "~/shopify.server";
+import {getMemberByHandle, updateMember} from "~/utils/utils.server";
+import {Form, useActionData, useLoaderData} from "@remix-run/react";
+import {sessionStorage} from "~/session.server";
 import z from "zod";
-import { useIsPending } from "~/utils/misc";
-import {
-  FormProvider,
-  getFormProps,
-  useForm,
-  useInputControl,
-} from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { LanguagesWrapper } from "~/components/LanguagesWrapper";
-import { LogoutForm } from "~/components/LogoutForm";
-import { ProfilePhoto } from "~/components/ProfilePhoto";
-import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
-import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
-import { LinksWrapper } from "~/components/LinksWrapper";
+import {useIsPending} from "~/utils/misc";
+import {FormProvider, getFormProps, useForm, useInputControl,} from "@conform-to/react";
+import {parseWithZod} from "@conform-to/zod";
+import {LanguagesWrapper} from "~/components/LanguagesWrapper";
+import {LogoutForm} from "~/components/LogoutForm";
+import {ProfilePhoto} from "~/components/ProfilePhoto";
+import {ProfileVisibilityToggle} from "~/components/ProfileVisibilityToggle";
+import {OpenToWorkToggle} from "~/components/OpenToWorkToggle";
+import {LinksWrapper} from "~/components/LinksWrapper";
+import {RichTextEditorWrapper} from "~/components/RichTextEditor";
+import {SlateEditorWrapper} from "~/components/SlateEditorWrapper";
+
 
 const validLanguages = [
   "English",
@@ -54,7 +42,6 @@ const MemberData = z.object({
   id: z.string(),
   name: z.string({ required_error: "Name is required" }),
   tagline: z.string().optional().nullable(),
-  description: z.string().optional().nullable(),
   profile: z
     .preprocess((val) => val === "on" || val == true, z.boolean().optional())
     .optional(),
@@ -76,6 +63,7 @@ const MemberData = z.object({
   github: z.string().url().optional(),
   you_tube: z.string().url().optional(),
   alternative_contact: z.string().url().optional(),
+  description: z.string().optional(),
 });
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -108,7 +96,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return json({ member: result.data });
 };
 
-export const action = async ({ request }: LoaderFunctionArgs) => {
+export const action = async ({ request, params }: LoaderFunctionArgs) => {
+  const { handle } = params;
   const formData = await request.formData();
   const { admin } = await unauthenticated.admin(process.env.SHOP);
 
@@ -124,7 +113,15 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
   console.log("new fields", fields);
   try {
     await updateMember({ admin, id, fields });
-    return new Response("", { status: 200 });
+    let member: { [p: string]: any; id: string } = await getMemberByHandle({
+      admin,
+      handle,
+    });
+    const result = MemberData.safeParse(member);
+    if (!result.success) {
+      console.error(result.error);
+      return json({ member: null });
+    }
   } catch (e) {
     console.error(e);
     return submission.reply({
@@ -135,13 +132,12 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 
 export default function MemberDashboard() {
   const loaderData = useLoaderData<typeof loader>();
-  console.log("loaderData", loaderData);
-  const actionData = useActionData<typeof action>();
+  let actionData = useActionData<typeof loader>();
   const isPending = useIsPending();
 
   const [form, fields] = useForm({
     id: "member-form",
-    lastResult: actionData,
+    lastResult: actionData?.member,
     defaultValue: loaderData.member,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: MemberData });
@@ -151,7 +147,6 @@ export default function MemberDashboard() {
 
   const name = useInputControl(fields.name);
   const tagline = useInputControl(fields.tagline);
-  const description = useInputControl(fields.description);
   const email = useInputControl(fields.email);
 
   return (
@@ -188,14 +183,8 @@ export default function MemberDashboard() {
                         />
                       </FormLayout>
                     </InlineGrid>
-                    <TextField
-                      label={"Description"}
-                      autoComplete={"off"}
-                      multiline={4}
-                      value={description.value}
-                      onChange={description.change}
-                      error={fields.description.errors}
-                    />
+                    {/*<RichTextEditorWrapper description={fields.description.name}/>*/}
+                    <SlateEditorWrapper description={fields.description.name}/>
                   </FormLayout>
                 </Card>
                 <Card>{/*<ServicesWrapper />*/}</Card>
