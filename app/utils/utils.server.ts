@@ -166,6 +166,10 @@ export const createMember = async ({
             key: "role",
             value: role,
           },
+          {
+            key: "profile",
+            value: "false",
+          }
         ],
       },
     },
@@ -176,6 +180,7 @@ export const createMember = async ({
     },
   } = await response.json();
   if (userErrors.length > 0) {
+    console.error("userErrors", JSON.stringify(userErrors));
     throw new Error("Something went wrong while creating the member");
   }
   return { handle: metaobject.handle };
