@@ -1,25 +1,39 @@
-import {BlockStack, Button, Card, FormLayout, InlineError, InlineGrid, Layout, Page, TextField,} from "@shopify/polaris";
+import {
+  BlockStack,
+  Button,
+  Card,
+  FormLayout,
+  InlineError,
+  InlineGrid,
+  Layout,
+  Page,
+  TextField,
+} from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import React from "react";
-import type {LoaderFunctionArgs} from "@remix-run/node";
-import {json, redirect} from "@remix-run/node";
-import {unauthenticated} from "~/shopify.server";
-import {getMemberByHandle, updateMember} from "~/utils/utils.server";
-import {Form, useActionData, useLoaderData} from "@remix-run/react";
-import {sessionStorage} from "~/session.server";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { unauthenticated } from "~/shopify.server";
+import { getMemberByHandle, updateMember } from "~/utils/utils.server";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { sessionStorage } from "~/session.server";
 import z from "zod";
-import {useIsPending} from "~/utils/misc";
-import {FormProvider, getFormProps, useForm, useInputControl,} from "@conform-to/react";
-import {parseWithZod} from "@conform-to/zod";
-import {LanguagesWrapper} from "~/components/LanguagesWrapper";
-import {LogoutForm} from "~/components/LogoutForm";
-import {ProfilePhoto} from "~/components/ProfilePhoto";
-import {ProfileVisibilityToggle} from "~/components/ProfileVisibilityToggle";
-import {OpenToWorkToggle} from "~/components/OpenToWorkToggle";
-import {LinksWrapper} from "~/components/LinksWrapper";
-import {RichTextEditorWrapper} from "~/components/RichTextEditor";
-import {SlateEditorWrapper} from "~/components/SlateEditorWrapper";
-
+import { useIsPending } from "~/utils/misc";
+import {
+  FormProvider,
+  getFormProps,
+  useForm,
+  useInputControl,
+} from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { LanguagesWrapper } from "~/components/LanguagesWrapper";
+import { LogoutForm } from "~/components/LogoutForm";
+import { ProfilePhoto } from "~/components/ProfilePhoto";
+import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
+import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
+import { LinksWrapper } from "~/components/LinksWrapper";
+import { RichTextEditorWrapper } from "~/components/RichTextEditor";
+import { SlateEditorWrapper } from "~/components/SlateEditorWrapper";
 
 const validLanguages = [
   "English",
@@ -184,7 +198,7 @@ export default function MemberDashboard() {
                       </FormLayout>
                     </InlineGrid>
                     {/*<RichTextEditorWrapper description={fields.description.name}/>*/}
-                    <SlateEditorWrapper description={fields.description.name}/>
+                    <SlateEditorWrapper description={fields.description.name} />
                   </FormLayout>
                 </Card>
                 <Card>{/*<ServicesWrapper />*/}</Card>
