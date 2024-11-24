@@ -3,7 +3,7 @@
 client_id = "dd66f08b30615f45c7db778b5f4bd59c"
 name = "member-profile-dev"
 handle = "member-profile-dev"
-application_url = "https://youth-limits-lined-institutes.trycloudflare.com"
+application_url = "https://suited-curious-lynx.ngrok-free.app"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_metaobjects"
 
 [auth]
 redirect_urls = [
-  "https://youth-limits-lined-institutes.trycloudflare.com/auth/callback",
-  "https://youth-limits-lined-institutes.trycloudflare.com/auth/shopify/callback",
-  "https://youth-limits-lined-institutes.trycloudflare.com/api/auth/callback"
+  "https://suited-curious-lynx.ngrok-free.app/auth/callback",
+  "https://suited-curious-lynx.ngrok-free.app/auth/shopify/callback",
+  "https://suited-curious-lynx.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]

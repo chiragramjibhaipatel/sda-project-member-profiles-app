@@ -32,8 +32,7 @@ import { ProfilePhoto } from "~/components/ProfilePhoto";
 import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
 import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
 import { LinksWrapper } from "~/components/LinksWrapper";
-import { RichTextEditorWrapper } from "~/components/RichTextEditor";
-import { SlateEditorWrapper } from "~/components/SlateEditorWrapper";
+import { RichTextEditor } from "~/components/richtexteditor";
 
 const validLanguages = [
   "English",
@@ -198,7 +197,7 @@ export default function MemberDashboard() {
                       </FormLayout>
                     </InlineGrid>
                     {/*<RichTextEditorWrapper description={fields.description.name}/>*/}
-                    <SlateEditorWrapper description={fields.description.name} />
+                    <RichTextEditor description={fields.description.name} />
                   </FormLayout>
                 </Card>
                 <Card>{/*<ServicesWrapper />*/}</Card>

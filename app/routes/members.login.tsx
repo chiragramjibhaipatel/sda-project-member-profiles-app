@@ -23,8 +23,10 @@ const LoginForm = z.object ({
 export const action = async ({request}: ActionFunctionArgs) => {
     const formData = await request.formData ();
     checkHoneypot (formData);
+	console.log("After Honeypot")
     const {admin} = await unauthenticated.admin (process.env.SHOP);
-    
+    console.log("After Admin")
+
     const submission = await parseWithZod (formData, {
 	schema: () =>
 	    LoginForm.transform (async (data, ctx) => {
@@ -41,7 +43,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
 	    }),
 	async: true
     });
-    
+    console.log("After Submission")
     if (submission.status !== 'success') {
 	return json (submission.reply ());
     }
