@@ -37,21 +37,9 @@ export const toggleBlock = (editor: EditorType, format: ElementKey) => {
   const isList = isListFormat(format);
   const isActive = isBlockActive(editor, format);
 
-  console.log("isActive", isActive);
-
   let type: string | undefined;
 
   type = isActive ? "paragraph" : format;
-
-  Transforms.unwrapNodes(editor, {
-    match: (node) => {
-      return (
-        !Editor.isEditor(node) &&
-        Element.isElement(node) &&
-        isListFormat(node.type as ElementKey)
-      );
-    },
-  });
 
   if (!isActive && isList) {
     type = "list-item";
