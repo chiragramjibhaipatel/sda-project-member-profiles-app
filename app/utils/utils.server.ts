@@ -1,5 +1,22 @@
 import bcrypt from "bcryptjs";
 import type { AdminApiContext } from "@shopify/shopify-app-remix/server";
+import SaveHashedPassword from "~/graphql/SaveHashedPassword";
+import CurrentAppInstallation from "~/graphql/CurrentAppInstallation";
+import CreateMember from "~/graphql/CreateMember";
+import GetMemberPasswordByEmail from "~/graphql/GetMemberPasswordByEmail";
+import GetMemberByHandle from "~/graphql/GetMemberByHandle";
+import {
+  CreateMemberMutation,
+  CurrentAppInstallationQuery,
+  GetMemberByHandleQuery,
+  GetMemberPasswordByEmailQuery,
+  SaveHashedPasswordMutation,
+  UpdateMemberMutation,
+} from "~/types/admin.generated";
+import invariant from "tiny-invariant";
+import { MetaobjectField } from "~/types/admin.types";
+import { MemberSchema } from "~/routes/app.members.$handle";
+import UpdateMember from "~/graphql/UpdateMember";
 
 export const createHashedPassword = async ({
   password,
@@ -11,91 +28,15 @@ export const createHashedPassword = async ({
   return { hashedPassword };
 };
 
-const CURRENT_APP_INSTALLATION = `#graphql
-query {
-    currentAppInstallation {
-        id
-    }
-}
-`;
-
-const SAVE_HASHED_PASSWORD = `#graphql
-mutation MetafieldsSet($metafields: MetafieldsSetInput!){
-    metafieldsSet(
-        metafields:[$metafields]
-    ) {
-        metafields {
-            id
-            namespace
-            key
-            value
-        }
-        userErrors {
-            field
-            message
-        }
-    }
-}
-`;
-
-const CREATE_MEMBER = `#graphql
-mutation Metaobjectreate($metaobject: MetaobjectCreateInput!){
-    metaobjectCreate(metaobject: $metaobject) {
-        metaobject {
-            id
-            handle
-        }
-        userErrors{
-            field
-            message
-        }
-    }
-}
-`;
-
-const GET_MEMBER_PASSWORD_BY_EMAIL = `#graphql
-query getAppInstallation($key: String!){
-    currentAppInstallation{
-        metafield(namespace:"sda_member_hashed_password", key:$key){
-            value
-        }
-    }
-}
-`;
-
-const GET_MEMBER_BY_HANDLE = `#graphql
-query GetMemner($handle: MetaobjectHandleInput!){
-    metaobjectByHandle(handle:$handle){
-        id
-        fields{
-            key
-            jsonValue
-            type
-        }
-    }
-}
-`;
-
-const UPDATE_METAOBJECT = `#graphql
-mutation UpdateMetaobject($id: ID!, $metaobject: MetaobjectUpdateInput!) {
-    metaobjectUpdate(id: $id, metaobject: $metaobject ) {
-        userErrors {
-            field
-            message
-            code
-        }
-    }
-}
-`;
 export const getAppInstallationId = async (admin: AdminApiContext) => {
   try {
-    const response = await admin.graphql(CURRENT_APP_INSTALLATION);
-    const {
-      data: {
-        currentAppInstallation: { id },
-      },
-    } = await response.json();
-    return { id };
+    const response = await admin.graphql(CurrentAppInstallation);
+    const { data } = (await response.json()) as {
+      data: CurrentAppInstallationQuery;
+    };
+    console.log("data", data);
+
+    return { id: data.currentAppInstallation.id };
   } catch (e) {
     console.error(e);
     throw new Error(
@@ -118,7 +59,7 @@ export const storeHashedPassword = async ({
 }) => {
   const namespace = "sda_member_hashed_password";
   const type = "json";
-  const response = await admin.graphql(SAVE_HASHED_PASSWORD, {
+  const response = await admin.graphql(SaveHashedPassword, {
     variables: {
       metafields: {
         ownerId,
@@ -129,12 +70,11 @@ export const storeHashedPassword = async ({
       },
     },
   });
-  const {
-    data: {
-      metafieldsSet: { userErrors },
-    },
-  } = await response.json();
-  if (userErrors.length > 0) {
+  const { data } = (await response.json()) as {
+    data: SaveHashedPasswordMutation;
+  };
+  const { metafieldsSet } = data;
+  if (metafieldsSet?.userErrors && metafieldsSet.userErrors.length > 0) {
     throw new Error("Something went wrong while storing the hashed password");
   }
 };
@@ -149,7 +89,7 @@ export const createMember = async ({
   admin: AdminApiContext;
   email: string;
 }) => {
-  const response = await admin.graphql(CREATE_MEMBER, {
+  const response = await admin.graphql(CreateMember, {
     variables: {
       metaobject: {
         type: "member_profile",
@@ -169,20 +109,20 @@ export const createMember = async ({
           {
             key: "profile",
             value: "false",
-          }
+          },
         ],
       },
     },
   });
-  const {
-    data: {
-      metaobjectCreate: { metaobject, userErrors },
-    },
-  } = await response.json();
+  const { data } = (await response.json()) as { data: CreateMemberMutation };
+  invariant(data.metaobjectCreate, "No metaobjectCreate in response");
+  const { metaobject, userErrors } = data.metaobjectCreate;
+
   if (userErrors.length > 0) {
     console.error("userErrors", JSON.stringify(userErrors));
     throw new Error("Something went wrong while creating the member");
   }
+  invariant(metaobject, "No metaobject in response");
   return { handle: metaobject.handle };
 };
 export const validateLogin = async ({
@@ -195,16 +135,15 @@ export const validateLogin = async ({
   username: string;
 }) => {
   try {
-    const response = await admin.graphql(GET_MEMBER_PASSWORD_BY_EMAIL, {
+    const response = await admin.graphql(GetMemberPasswordByEmail, {
       variables: {
         key: username,
       },
     });
-    const {
-      data: {
-        currentAppInstallation: { metafield },
-      },
-    } = await response.json();
+    const { data } = (await response.json()) as {
+      data: GetMemberPasswordByEmailQuery;
+    };
+    const { metafield } = data.currentAppInstallation;
     if (!metafield) {
       return { isValidLogin: false };
     }
@@ -229,7 +168,7 @@ export const getMemberByHandle = async ({
   admin: AdminApiContext;
   handle: string;
 }) => {
-  const response = await admin.graphql(GET_MEMBER_BY_HANDLE, {
+  const response = await admin.graphql(GetMemberByHandle, {
     variables: {
       handle: {
         type: "member_profile",
@@ -237,68 +176,49 @@ export const getMemberByHandle = async ({
       },
     },
   });
-  const {
-    data: { metaobjectByHandle },
-  } = await response.json();
-  const {
-    id,
-    fields,
-  }: { id: string; fields: [{ key: string; jsonValue: any; type: string }] } =
-    metaobjectByHandle;
-  const member = convertInputToJSONObjectFormat({ fields });
-  return { id, ...member };
+  const { data } = (await response.json()) as { data: GetMemberByHandleQuery };
+  const { metaobjectByHandle } = data;
+  console.log("metaobjectByHandle", metaobjectByHandle);
+  invariant(metaobjectByHandle, "No metaobjectByHandle in response");
+
+  const member = mapToSchema(metaobjectByHandle.fields);
+  console.log("member", member);
+  const submission = MemberSchema.safeParse({id: metaobjectByHandle.id, ...member});
+  if (!submission.success) {
+    console.error("submission.error", submission.error);
+    throw new Error("Something went wrong while fetching the member");
+  }
+  return submission.data;
 };
 
 export const updateMember = async ({
   id,
-  fields,
+  name,
+  role,
   admin,
 }: {
   id: string;
-  fields: { [key: string]: any };
+  name: string;
+  role: string;
   admin: AdminApiContext;
 }) => {
-  let input = convertInputToGqlFormat(fields);
-  input = JSON.stringify(input);
-  console.log("input", input);
-  const variables = {
-    id,
-    metaobject: {
-      fields: { name: "testname" },
+  let input = convertInputToGqlFormat({ name, role });
+  // console.log("input", input);
+  const response = await admin.graphql(UpdateMember,{
+    variables: {
+      id,
+      metaobject: {
+        fields: input,
+      },
     },
-  };
-  console.dir(variables, { depth: null });
+  });
+  const {data} = await response.json() as {data: UpdateMemberMutation};
 
-  // const response = await admin.graphql(UPDATE_METAOBJECT, {
-  //   variables,
-  // });
-  const response = await admin.graphql(`mutation {
-    metaobjectUpdate(
-      id: "gid://shopify/Metaobject/76185010466"
-      metaobject: {fields: {key: "name", value: "testname 5"}}
-    ) {
-      metaobject {
-        handle
-        fields {
-          key
-          jsonValue
-          type
-        }
-      }
-      userErrors {
-        field
-        message
-        code
-      }
-    }
-  }`);
-  const {
-    data: {
-      metaobjectUpdate: { userErrors },
-    },
-  } = await response.json();
-  if (userErrors.length > 0) {
-    console.error("userErrors", userErrors);
+  const { metaobjectUpdate } = data;
+  invariant(metaobjectUpdate, "No metaobjectUpdate in response");
+  
+  if (metaobjectUpdate?.userErrors.length > 0) {
+    console.error("userErrors", JSON.stringify(metaobjectUpdate.userErrors));
     throw new Error("Something went wrong while updating the member");
   }
 };
@@ -332,19 +252,14 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
   });
 }
 
-function convertInputToJSONObjectFormat({
-  fields,
-}: {
-  fields: [{ key: string; jsonValue: any; type: string }];
-}) {
-  
-  const result = {} as { [key: string]: any };
-  fields.forEach((field) => {
-    if(field.key === "description"){
-      result[field.key] = JSON.stringify(field.jsonValue);
-    }else if (field.jsonValue !== null) {
-      result[field.key] = field.jsonValue;
-    }
-  });
-  return result;
+function mapToSchema(
+  fields: Pick<MetaobjectField, "type" | "key" | "jsonValue">[],
+) {
+  return fields.reduce(
+    (acc, field) => {
+      acc[field.key] = field.jsonValue;
+      return acc;
+    },
+    {} as { [key: string]: any },
+  );
 }

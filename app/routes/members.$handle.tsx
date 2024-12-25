@@ -125,22 +125,23 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
   const { id, ...fields } = submission.value;
   console.log("new fields", fields);
   try {
-    await updateMember({ admin, id, fields });
-    let member: { [p: string]: any; id: string } = await getMemberByHandle({
-      admin,
-      handle,
-    });
-    const result = MemberData.safeParse(member);
-    if (!result.success) {
-      console.error(result.error);
-      return json({ member: null });
-    }
+    // await updateMember({ admin, id, ...fields });
+    // let member: { [p: string]: any; id: string } = await getMemberByHandle({
+    //   admin,
+    //   handle,
+    // });
+    // const result = MemberData.safeParse(member);
+    // if (!result.success) {
+    //   console.error(result.error);
+    //   return json({ member: null });
+    // }
   } catch (e) {
     console.error(e);
     return submission.reply({
       formErrors: ["Failed to save changes..."],
     });
   }
+  return redirect(`/members/${handle}`);
 };
 
 export default function MemberDashboard() {
