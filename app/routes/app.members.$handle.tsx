@@ -20,7 +20,6 @@ import z from "zod";
 import {
   Form,
   useActionData,
-  useFetcher,
   useLoaderData,
   useNavigation,
 } from "@remix-run/react";
@@ -68,8 +67,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     return { member: null };
   }
   const member = await getMemberByHandle({ handle, admin });
-  member.name = "aaaaa"
-  return member;
+  return { member };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -88,41 +86,38 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { id: appInstallationId } = await getAppInstallationId(admin);
   let member;
   if (handle === "new") {
-	  console.log("Creating new member");
-	  member = await createMember({ name, email, role, admin });
-	  const { hashedPassword } = await createHashedPassword({ password });
-	  await storeHashedPassword({
-		admin,
-		appInstallationId,
-		email,
-		handle,
-		hashedPassword,
-	  });
-	  return redirect(`/app/members/${member.handle}`);
-	} else {
-		console.log("Updating member");
-		invariant(id, "Id is required");
-		member = await updateMember({ id, name, role, admin });
+    console.log("Creating new member");
+    member = await createMember({ name, email, role, admin });
+    invariant(password, "password is required");
+    const { hashedPassword } = await createHashedPassword({ password });
+    await storeHashedPassword({
+      admin,
+      appInstallationId,
+      email,
+      handle,
+      hashedPassword,
+    });
+    return redirect(`/app/members/${member.handle}`);
+  } else {
+    console.log("Updating member");
+    invariant(id, "Id is required");
+    member = await updateMember({ id, name, role, admin });
     return null;
   }
 };
 
 export default function Member() {
-  const loaderData = useLoaderData<typeof loader>();
-  console.log("loaderData", loaderData);
+  const {member} = useLoaderData<typeof loader>();
+  const lastResult = useActionData<typeof action>();
+
+  console.log("loaderData", member);
   const navigation = useNavigation();
   const loading = navigation.state !== "idle";
 
-  const lastResult = useActionData<typeof action>();
   const [form, fields] = useForm({
-    lastResult: lastResult || loaderData,
-    defaultValue: loaderData,
+    lastResult: lastResult,
+    defaultValue: member,
     onValidate({ formData }) {
-      console.log(
-        "validating form data",
-        formData.get("password"),
-        formData.get("role"),
-      );
       return parseWithZod(formData, { schema: MemberSchema });
     },
     shouldValidate: "onBlur",
@@ -135,6 +130,7 @@ export default function Member() {
   const password = useInputControl(fields.password);
   const confirmPassword = useInputControl(fields.confirmPassword);
   const id = useInputControl(fields.id);
+  const isNew = member === null;
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleRoleChange = (newValue: boolean, id: string) => {
@@ -144,7 +140,7 @@ export default function Member() {
 
   return (
     <Page
-      title="Add new member"
+      title={isNew ? "Create Member" : "Update Member"}
       backAction={{ content: "Dashboard", url: "/app" }}
     >
       <BlockStack gap={"400"}>
@@ -168,6 +164,7 @@ export default function Member() {
                 name={fields.email.name}
                 value={email.value}
                 autoComplete={"off"}
+				onChange={isNew ? email.change : undefined}
                 requiredIndicator={true}
                 error={fields.email.errors}
               />
@@ -237,7 +234,7 @@ export default function Member() {
                 loading={loading}
                 disabled={loading}
               >
-                Create
+                {isNew ? "Create" : "Update"}
               </Button>
             </FormLayout>
           </Form>
