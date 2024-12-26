@@ -16,10 +16,10 @@ import {
 } from "@shopify/polaris";
 import { HideIcon, ViewIcon } from "@shopify/polaris-icons";
 import { useState } from "react";
-import z from "zod";
 import {
   Form,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
 } from "@remix-run/react";
@@ -35,8 +35,7 @@ import { useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import invariant from "tiny-invariant";
 import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
-
-
+import { useIsPending } from "~/utils/misc";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -66,7 +65,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { id: appInstallationId } = await getAppInstallationId(admin);
   let member;
   if (handle === "new") {
-    console.log("Creating new member");
     member = await createMember({ name, email, role, admin });
     invariant(password, "password is required");
     const { hashedPassword } = await createHashedPassword({ password });
@@ -79,7 +77,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     return redirect(`/app/members/${member.handle}`);
   } else {
-    console.log("Updating member");
     invariant(id, "Id is required");
     member = await updateMember({ id, name, role, admin });
     return null;
@@ -87,7 +84,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export default function Member() {
-  const {member} = useLoaderData<typeof loader>();
+  const { member } = useLoaderData<typeof loader>();
   const lastResult = useActionData<typeof action>();
 
   const navigation = useNavigation();
@@ -142,7 +139,7 @@ export default function Member() {
                 name={fields.email.name}
                 value={email.value}
                 autoComplete={"off"}
-				onChange={isNew ? email.change : undefined}
+                onChange={isNew ? email.change : undefined}
                 requiredIndicator={true}
                 error={fields.email.errors}
               />
@@ -232,7 +229,35 @@ export default function Member() {
             </List.Item>
           </List>
         </Card>
+        <Card>
+          <FakeMembersCreateButton />
+        </Card>
       </BlockStack>
     </Page>
+  );
+}
+
+function FakeMembersCreateButton({}) {
+  const fetcher = useFetcher();
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget as HTMLFormElement);
+
+    fetcher.submit(formData, { method: "POST", action: "/app/api/fake/create-members" });
+  };
+
+  return (
+    <InlineStack gap={"400"} align="space-between">
+      <Text as={"h2"} variant={"bodyLg"}>
+        Create a lot of fake member profiles
+      </Text>
+      <Form onSubmit={handleSubmit}>
+        <input type="hidden" name="_action" value="create" />
+        <Button submit variant={"primary"}>
+          Create 10 fake profiles
+        </Button>
+      </Form>
+    </InlineStack>
   );
 }
