@@ -15,8 +15,8 @@ import {
 } from "~/types/admin.generated";
 import invariant from "tiny-invariant";
 import { MetaobjectField } from "~/types/admin.types";
-import { MemberSchema } from "~/routes/app.members.$handle";
 import UpdateMember from "~/graphql/UpdateMember";
+import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
 
 export const createHashedPassword = async ({
   password,
@@ -183,7 +183,7 @@ export const getMemberByHandle = async ({
 
   const member = mapToSchema(metaobjectByHandle.fields);
   console.log("member", member);
-  const submission = MemberSchema.safeParse({id: metaobjectByHandle.id, ...member});
+  const submission = MemberProfileSchema.safeParse({id: metaobjectByHandle.id, ...member});
   if (!submission.success) {
     console.error("submission.error", submission.error);
     throw new Error("Something went wrong while fetching the member");

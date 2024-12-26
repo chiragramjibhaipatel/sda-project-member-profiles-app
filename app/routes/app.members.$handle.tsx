@@ -34,29 +34,9 @@ import {
 import { useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import invariant from "tiny-invariant";
+import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
 
-export const MemberSchema = z
-  .object({
-    id: z.string().optional(),
-    name: z.string().min(3),
-    email: z.string().min(3).email(),
-    role: z.enum(["Founder", "Founding Member", "Member"]),
-    password: z.string().optional(),
-    confirmPassword: z.string().optional(),
-    _action: z.string().optional(),
-  })
-  .refine(
-    ({ confirmPassword, password, _action }) => {
-      if (_action === undefined) {
-        return true;
-      }
-      return password === confirmPassword;
-    },
-    {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    },
-  );
+
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -76,7 +56,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
 
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: MemberSchema });
+  const submission = parseWithZod(formData, { schema: MemberProfileSchema });
 
   if (submission.status !== "success") {
     return json(submission.reply());
@@ -110,7 +90,6 @@ export default function Member() {
   const {member} = useLoaderData<typeof loader>();
   const lastResult = useActionData<typeof action>();
 
-  console.log("loaderData", member);
   const navigation = useNavigation();
   const loading = navigation.state !== "idle";
 
@@ -118,7 +97,7 @@ export default function Member() {
     lastResult: lastResult,
     defaultValue: member,
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: MemberSchema });
+      return parseWithZod(formData, { schema: MemberProfileSchema });
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
@@ -134,7 +113,6 @@ export default function Member() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleRoleChange = (newValue: boolean, id: string) => {
-    console.log("Role", newValue, id);
     role.change(id);
   };
 
