@@ -27,6 +27,10 @@ export type GetAllMembersQueryVariables = AdminTypes.Exact<{
   query?: AdminTypes.InputMaybe<AdminTypes.Scalars['String']['input']>;
   reverse: AdminTypes.Scalars['Boolean']['input'];
   sortKey: AdminTypes.Scalars['String']['input'];
+  after?: AdminTypes.InputMaybe<AdminTypes.Scalars['String']['input']>;
+  before?: AdminTypes.InputMaybe<AdminTypes.Scalars['String']['input']>;
+  first?: AdminTypes.InputMaybe<AdminTypes.Scalars['Int']['input']>;
+  last?: AdminTypes.InputMaybe<AdminTypes.Scalars['Int']['input']>;
 }>;
 
 
@@ -69,7 +73,7 @@ export type UpdateMemberMutation = { metaobjectUpdate?: AdminTypes.Maybe<{ metao
 
 interface GeneratedQueryTypes {
   "#graphql\nquery CurrentAppInstallation {\n    currentAppInstallation {\n        id\n    }\n}\n": {return: CurrentAppInstallationQuery, variables: CurrentAppInstallationQueryVariables},
-  "#graphql\nfragment MemberProfile on Metaobject {\n    id\n    name: field(key: \"name\") {\n        value\n    }\n    email: field(key: \"email\") {\n        value\n    }\n    updatedAt\n}\n\nfragment PageInfo on PageInfo {\n    hasNextPage\n    hasPreviousPage\n    startCursor\n    endCursor\n}\n\nquery GetAllMembers($type: String!, $query: String, $reverse: Boolean!, $sortKey: String!) {\n  metaobjects(type: $type, first: 50, query: $query, reverse:$reverse, sortKey:$sortKey) {\n    edges {\n      node {\n       ...MemberProfile\n      }\n    }\n    pageInfo {\n     ...PageInfo\n    }\n  }\n}\n": {return: GetAllMembersQuery, variables: GetAllMembersQueryVariables},
+  "#graphql\nfragment MemberProfile on Metaobject {\n    id\n    name: field(key: \"name\") {\n        value\n    }\n    email: field(key: \"email\") {\n        value\n    }\n  updatedAt\n}\n\nfragment PageInfo on PageInfo {\n    hasNextPage\n    hasPreviousPage\n    startCursor\n    endCursor\n}\n\nquery GetAllMembers($type: String!, $query: String, $reverse: Boolean!, $sortKey: String!, $after: String, $before: String, $first: Int, $last: Int) {\n  metaobjects(type: $type, first: $first, last: $last, query: $query, reverse:$reverse, sortKey:$sortKey, after: $after, before: $before) {\n    edges {\n      node {\n       ...MemberProfile\n      }\n    }\n    pageInfo {\n     ...PageInfo\n    }\n  }\n}\n": {return: GetAllMembersQuery, variables: GetAllMembersQueryVariables},
   "#graphql\nquery GetMemberByHandle($handle: MetaobjectHandleInput!){\n    metaobjectByHandle(handle:$handle){\n        id\n        fields{\n            key\n            jsonValue\n            type\n        }\n    }\n}\n": {return: GetMemberByHandleQuery, variables: GetMemberByHandleQueryVariables},
   "#graphql\nquery GetMemberPasswordByEmail($key: String!){\n    currentAppInstallation{\n        metafield(namespace:\"sda_member_hashed_password\", key:$key){\n            value\n        }\n    }\n}\n": {return: GetMemberPasswordByEmailQuery, variables: GetMemberPasswordByEmailQueryVariables},
 }

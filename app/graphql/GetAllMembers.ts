@@ -7,7 +7,7 @@ fragment MemberProfile on Metaobject {
     email: field(key: "email") {
         value
     }
-    updatedAt
+  updatedAt
 }
 
 fragment PageInfo on PageInfo {
@@ -17,8 +17,8 @@ fragment PageInfo on PageInfo {
     endCursor
 }
 
-query GetAllMembers($type: String!, $query: String, $reverse: Boolean!, $sortKey: String!) {
-  metaobjects(type: $type, first: 50, query: $query, reverse:$reverse, sortKey:$sortKey) {
+query GetAllMembers($type: String!, $query: String, $reverse: Boolean!, $sortKey: String!, $after: String, $before: String, $first: Int, $last: Int) {
+  metaobjects(type: $type, first: $first, last: $last, query: $query, reverse:$reverse, sortKey:$sortKey, after: $after, before: $before) {
     edges {
       node {
        ...MemberProfile

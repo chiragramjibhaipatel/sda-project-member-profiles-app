@@ -11,16 +11,18 @@ import { MembersListTable } from "../components/MembersListTable";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const {admin: {graphql}} = await authenticate.admin(request);
   console.log("fetching members");
-  //get first 50 members from the shopify metaobject
-  const {members} = await getMembers({graphql});
+  const {members} = await getMembers({graphql, direction:"next"});
   return json({members});
 };
 
 export const action = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  
-  
-  return null;
+  const { admin: {graphql} } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const { startCursor, endCursor, direction } = Object.fromEntries(
+    formData,
+  ) as { startCursor?: string; endCursor?: string; direction: string };
+  const { members } = await getMembers({ graphql, startCursor, endCursor, direction });
+  return json({ members });
 };
 
 export default function MembersList() {
@@ -38,3 +40,6 @@ export default function MembersList() {
 }
 
 
+export function shouldRevalidate({ actionResult }: { actionResult: any }) {
+  return false;
+}

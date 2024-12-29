@@ -1,5 +1,4 @@
 import { GetAllMembersQuery } from "~/types/admin.generated";
-
 import {
   TextField,
   IndexTable,
@@ -15,9 +14,24 @@ import {
   Card,
 } from "@shopify/polaris";
 import type { IndexFiltersProps, TabProps } from "@shopify/polaris";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useFetcher } from "@remix-run/react";
+import { Maybe } from "~/types/admin.types";
 
-export function MembersListTable({ members }: { members: GetAllMembersQuery }) {
+export function MembersListTable({
+  members: initialMembers,
+}: {
+  members: GetAllMembersQuery;
+}) {
+  const [members, setMembers] = useState(initialMembers);
+  const fetcher = useFetcher();
+  const isPending = ["loading", "submitting"].includes(fetcher.state);
+  useEffect(() => {
+    if (fetcher.data) {
+      setMembers(fetcher.data.members);
+    }
+  }, [fetcher.data]);
+
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
   const [itemStrings, setItemStrings] = useState([
@@ -256,9 +270,31 @@ export function MembersListTable({ members }: { members: GetAllMembersQuery }) {
     ),
   );
 
+  const handleOnNext = async ({
+    endCursor,
+  }: {
+    endCursor: Maybe<string> | undefined;
+  }) => {
+    if (!endCursor) return;
+    await fetcher.submit({ endCursor, direction: "next" }, { method: "POST" });
+  };
+
+  const handleOnPrevious = async ({
+    startCursor,
+  }: {
+    startCursor: Maybe<string> | undefined;
+  }) => {
+    if (!startCursor) return;
+    await fetcher.submit(
+      { startCursor, direction: "previous" },
+      { method: "POST" },
+    );
+  };
+
   return (
     <Card padding={"0"}>
       <IndexFilters
+        loading={isPending}
         sortOptions={sortOptions}
         sortSelected={sortSelected}
         queryValue={queryValue}
@@ -296,7 +332,12 @@ export function MembersListTable({ members }: { members: GetAllMembersQuery }) {
         pagination={{
           hasNext: members.metaobjects.pageInfo.hasNextPage,
           hasPrevious: members.metaobjects.pageInfo.hasPreviousPage,
-          onNext: () => {},
+          onNext: () =>
+            handleOnNext({ endCursor: members.metaobjects.pageInfo.endCursor }),
+          onPrevious: () =>
+            handleOnPrevious({
+              startCursor: members.metaobjects.pageInfo.startCursor,
+            }),
         }}
       >
         {rowMarkup}
