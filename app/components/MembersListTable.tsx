@@ -4,7 +4,6 @@ import {
   IndexTable,
   IndexFilters,
   useSetIndexFiltersMode,
-  useIndexResourceState,
   Text,
   ChoiceList,
   RangeSlider,
@@ -12,6 +11,7 @@ import {
   IndexFiltersMode,
   useBreakpoints,
   Card,
+  Link,
 } from "@shopify/polaris";
 import type { IndexFiltersProps, TabProps } from "@shopify/polaris";
 import { useState, useCallback, useEffect } from "react";
@@ -255,12 +255,14 @@ export function MembersListTable({
   };
 
   const rowMarkup = members.metaobjects.edges.map(
-    ({ node: { id, name, email, updatedAt } }, index) => (
+    ({ node: { id, name, email, updatedAt, handle } }, index) => (
       <IndexTable.Row id={id} key={id} position={index}>
         <IndexTable.Cell>
-          <Text variant="bodyMd" fontWeight="bold" as="span">
-            {name?.value}
-          </Text>
+          <Link url={`/app/members/${handle}`}>
+            <Text variant="bodyMd" fontWeight="bold" as="span">
+              {name?.value}
+            </Text>
+          </Link>
         </IndexTable.Cell>
         <IndexTable.Cell>{email?.value}</IndexTable.Cell>
         <IndexTable.Cell>

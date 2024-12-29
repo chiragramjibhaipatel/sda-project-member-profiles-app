@@ -8,6 +8,7 @@ fragment MemberProfile on Metaobject {
         value
     }
   updatedAt
+  handle
 }
 
 fragment PageInfo on PageInfo {

@@ -88,7 +88,7 @@ export default function Member() {
   const lastResult = useActionData<typeof action>();
 
   const navigation = useNavigation();
-  const loading = navigation.state !== "idle";
+  const loading = navigation.state === "submitting";
 
   const [form, fields] = useForm({
     lastResult: lastResult,
@@ -116,7 +116,7 @@ export default function Member() {
   return (
     <Page
       title={isNew ? "Create Member" : "Update Member"}
-      backAction={{ content: "Dashboard", url: "/app" }}
+      backAction={{ content: "Dashboard", url: "/app/members" }}
     >
       <BlockStack gap={"400"}>
         <Card>
