@@ -8,7 +8,7 @@ export async function getMembers({ graphql }: { graphql: AdminGraphqlClient }) {
       type: "member_profile",
       query: "",
       sortKey: "updated_at",
-        reverse: true,
+      reverse: true,
     },
   });
   if (!response.ok) {

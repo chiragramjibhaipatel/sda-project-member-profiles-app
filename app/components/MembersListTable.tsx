@@ -250,7 +250,7 @@ export function MembersListTable({ members }: { members: GetAllMembersQuery }) {
         </IndexTable.Cell>
         <IndexTable.Cell>{email?.value}</IndexTable.Cell>
         <IndexTable.Cell>
-            {new Date(updatedAt).toLocaleString()}
+          {new Date(updatedAt).toLocaleString()}
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
@@ -287,7 +287,11 @@ export function MembersListTable({ members }: { members: GetAllMembersQuery }) {
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
         itemCount={members.metaobjects.edges.length}
-        headings={[{ title: "Members" }, { title: "Email" }, { title: "Updated" }]}
+        headings={[
+          { title: "Members" },
+          { title: "Email" },
+          { title: "Updated" },
+        ]}
         selectable={false}
         pagination={{
           hasNext: members.metaobjects.pageInfo.hasNextPage,
