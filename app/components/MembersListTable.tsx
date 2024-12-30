@@ -40,27 +40,13 @@ export function MembersListTable({
     "Founding Members",
     "Members", 
   ]);
-  const deleteView = (index: number) => {
-    const newItemStrings = [...itemStrings];
-    newItemStrings.splice(index, 1);
-    setItemStrings(newItemStrings);
-    setSelected(0);
-  };
-
-  const duplicateView = async (name: string) => {
-    setItemStrings([...itemStrings, name]);
-    setSelected(itemStrings.length);
-    await sleep(1);
-    return true;
-  };
+  
   const [selectedTab, setSelectedTab] = useState(itemStrings[0]);
   
   function handleTabChange(item: string) {
-    console.log(`Tab changed to: ${item}`);
     setSelectedTab(item);
     fetcher.submit({ selectedTab: item, _action : "tab_changed" }, { method: "POST" });
   }
-
 
   const tabs: TabProps[] = itemStrings.map((item, index) => ({
     content: item,
@@ -68,45 +54,7 @@ export function MembersListTable({
     onAction: () => handleTabChange(item),
     id: `${item}-${index}`,
     isLocked: index === 0,
-    actions:
-      index === 0
-        ? []
-        : [
-            {
-              type: "rename",
-              onAction: () => {},
-              onPrimaryAction: async (value: string): Promise<boolean> => {
-                const newItemsStrings = tabs.map((item, idx) => {
-                  if (idx === index) {
-                    return value;
-                  }
-                  return item.content;
-                });
-                await sleep(1);
-                setItemStrings(newItemsStrings);
-                return true;
-              },
-            },
-            {
-              type: "duplicate",
-              onPrimaryAction: async (value: string): Promise<boolean> => {
-                await sleep(1);
-                duplicateView(value);
-                return true;
-              },
-            },
-            {
-              type: "edit",
-            },
-            {
-              type: "delete",
-              onPrimaryAction: async () => {
-                await sleep(1);
-                deleteView(index);
-                return true;
-              },
-            },
-          ],
+    
   }));
   const [selected, setSelected] = useState(0);
   const onCreateNewView = async (value: string) => {
@@ -129,120 +77,23 @@ export function MembersListTable({
   const { mode, setMode } = useSetIndexFiltersMode(IndexFiltersMode.Filtering);
   const onHandleCancel = () => {};
 
-  const onHandleSave = async () => {
-    await sleep(1);
-    return true;
-  };
-
-  const primaryAction: IndexFiltersProps["primaryAction"] =
-    selected === 0
-      ? {
-          type: "save-as",
-          onAction: onCreateNewView,
-          disabled: false,
-          loading: false,
-        }
-      : {
-          type: "save",
-          onAction: onHandleSave,
-          disabled: false,
-          loading: false,
-        };
-  const [accountStatus, setAccountStatus] = useState<string[]>([]);
-  const [moneySpent, setMoneySpent] = useState<[number, number] | undefined>(
-    undefined,
-  );
   const [taggedWith, setTaggedWith] = useState<string | undefined>("");
   const [queryValue, setQueryValue] = useState<string | undefined>(undefined);
 
-  const handleAccountStatusChange = useCallback(
-    (value: string[]) => setAccountStatus(value),
-    [],
-  );
-  const handleMoneySpentChange = useCallback(
-    (value: [number, number]) => setMoneySpent(value),
-    [],
-  );
-  const handleTaggedWithChange = useCallback(
-    (value: string) => setTaggedWith(value),
-    [],
-  );
   const handleQueryValueChange = useCallback(
     (value: string) => setQueryValue(value),
     [],
   );
-  const handleAccountStatusRemove = useCallback(() => setAccountStatus([]), []);
-  const handleMoneySpentRemove = useCallback(
-    () => setMoneySpent(undefined),
-    [],
-  );
+  
   const handleTaggedWithRemove = useCallback(() => setTaggedWith(""), []);
   const handleQueryValueRemove = useCallback(() => setQueryValue(""), []);
   const handleFiltersClearAll = useCallback(() => {
-    handleAccountStatusRemove();
-    handleMoneySpentRemove();
     handleTaggedWithRemove();
     handleQueryValueRemove();
   }, [
     handleQueryValueRemove,
     handleTaggedWithRemove,
-    handleMoneySpentRemove,
-    handleAccountStatusRemove,
   ]);
-
-  const filters = [
-    {
-      key: "accountStatus",
-      label: "Account status",
-      filter: (
-        <ChoiceList
-          title="Account status"
-          titleHidden
-          choices={[
-            { label: "Enabled", value: "enabled" },
-            { label: "Not invited", value: "not invited" },
-            { label: "Invited", value: "invited" },
-            { label: "Declined", value: "declined" },
-          ]}
-          selected={accountStatus || []}
-          onChange={handleAccountStatusChange}
-          allowMultiple
-        />
-      ),
-      shortcut: true,
-    },
-    {
-      key: "taggedWith",
-      label: "Tagged with",
-      filter: (
-        <TextField
-          label="Tagged with"
-          value={taggedWith}
-          onChange={handleTaggedWithChange}
-          autoComplete="off"
-          labelHidden
-        />
-      ),
-      shortcut: true,
-    },
-    {
-      key: "moneySpent",
-      label: "Money spent",
-      filter: (
-        <RangeSlider
-          label="Money spent is between"
-          labelHidden
-          value={moneySpent || [0, 500]}
-          prefix="$"
-          output
-          min={0}
-          max={2000}
-          step={1}
-          onChange={handleMoneySpentChange}
-        />
-      ),
-    },
-  ];
 
   const appliedFilters =
     taggedWith && !isEmpty(taggedWith)
@@ -310,7 +161,6 @@ export function MembersListTable({
         onQueryChange={handleQueryValueChange}
         onQueryClear={() => setQueryValue("")}
         onSort={setSortSelected}
-        primaryAction={primaryAction}
         cancelAction={{
           onAction: onHandleCancel,
           disabled: false,
@@ -319,9 +169,8 @@ export function MembersListTable({
         tabs={tabs}
         selected={selected}
         onSelect={setSelected}
-        canCreateNewView
-        onCreateNewView={onCreateNewView}
-        filters={filters}
+        canCreateNewView={false}
+        filters={[]}
         appliedFilters={appliedFilters}
         onClearAll={handleFiltersClearAll}
         mode={mode}
