@@ -31,16 +31,14 @@ export function MembersListTable({
       setMembers(fetcher.data.members);
     }
   }, [fetcher.data]);
-
+  
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
   const [itemStrings, setItemStrings] = useState([
     "All",
-    "Unpaid",
-    "Open",
-    "Closed",
-    "Local delivery",
-    "Local pickup",
+    "Founders",
+    "Founding Members",
+    "Members", 
   ]);
   const deleteView = (index: number) => {
     const newItemStrings = [...itemStrings];
@@ -55,11 +53,19 @@ export function MembersListTable({
     await sleep(1);
     return true;
   };
+  const [selectedTab, setSelectedTab] = useState(itemStrings[0]);
+  
+  function handleTabChange(item: string) {
+    console.log(`Tab changed to: ${item}`);
+    setSelectedTab(item);
+    fetcher.submit({ selectedTab: item, _action : "tab_changed" }, { method: "POST" });
+  }
+
 
   const tabs: TabProps[] = itemStrings.map((item, index) => ({
     content: item,
     index,
-    onAction: () => {},
+    onAction: () => handleTabChange(item),
     id: `${item}-${index}`,
     isLocked: index === 0,
     actions:
@@ -278,7 +284,7 @@ export function MembersListTable({
     endCursor: Maybe<string> | undefined;
   }) => {
     if (!endCursor) return;
-    await fetcher.submit({ endCursor, direction: "next" }, { method: "POST" });
+    await fetcher.submit({ endCursor, direction: "next", selectedTab, _action: "next" }, { method: "POST" });
   };
 
   const handleOnPrevious = async ({
@@ -288,7 +294,7 @@ export function MembersListTable({
   }) => {
     if (!startCursor) return;
     await fetcher.submit(
-      { startCursor, direction: "previous" },
+      { startCursor, direction: "previous", selectedTab, _action: "prev" },
       { method: "POST" },
     );
   };
@@ -368,3 +374,4 @@ export function MembersListTable({
     }
   }
 }
+

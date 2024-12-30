@@ -6,20 +6,27 @@ export async function getMembers({
   graphql,
   startCursor,
   endCursor,
-  direction,
+  direction = "next",
+  reverse = false,
+  selectedTab,
 }: {
   graphql: AdminGraphqlClient;
   startCursor?: string;
   endCursor?: string;
   direction?: string;
+  reverse?: boolean;
+  selectedTab?: string;
 }) {
+
+  let query = "";
+  query = getQuery({selectedTab})
   
     
   const variables = {
     type: "member_profile",
-    query: "",
+    query,
     sortKey: "updated_at",
-    reverse: true,
+    reverse,
     first: direction === "next" ? 50 : undefined,
     after: direction === "next" ? endCursor : undefined,
     last: direction === "previous" ? 50 : undefined,
@@ -34,3 +41,15 @@ export async function getMembers({
 
   return { members: responseJson.data };
 }
+function getQuery({selectedTab}: { selectedTab?: string; }) {
+  let query = "";
+  if (selectedTab === "Founders") {
+    query = 'fields.role:"Founder"';
+  } else if (selectedTab === "Founding Members") {
+    query = 'fields.role:"Founding Member"';
+  } else if (selectedTab === "Members") {
+    query = 'fields.role:"Member"';
+  }
+  return query;
+}
+
