@@ -9,6 +9,7 @@ export async function getMembers({
   direction = "next",
   selectedTab,
   sortSelected = "updated_at asc",
+  queryValue = "",
 }: {
   graphql: AdminGraphqlClient;
   startCursor?: string;
@@ -16,9 +17,13 @@ export async function getMembers({
   direction?: string;
   selectedTab?: string;
   sortSelected?: string;
+  queryValue?: string;
 }) {
   let query = "";
-  query = getQuery({ selectedTab });
+  if(queryValue){
+    query = `display_name:${queryValue}*`;
+  }
+  query = getQuery({ query, selectedTab });
   const sortKey = sortSelected.split(" ")[0];
   const reverse = sortSelected.includes("desc");
 
@@ -41,14 +46,16 @@ export async function getMembers({
 
   return { members: responseJson.data };
 }
-function getQuery({selectedTab}: { selectedTab?: string; }) {
-  let query = "";
+function getQuery({query, selectedTab}: { query: string; selectedTab?: string; }) {
+  if(query){
+    query = `${query} AND `;
+  }
   if (selectedTab === "Founders") {
-    query = 'fields.role:"Founder"';
+    query += 'fields.role:"Founder"';
   } else if (selectedTab === "Founding Members") {
-    query = 'fields.role:"Founding Member"';
+    query += 'fields.role:"Founding Member"';
   } else if (selectedTab === "Members") {
-    query = 'fields.role:"Member"';
+    query += 'fields.role:"Member"';
   }
   return query;
 }

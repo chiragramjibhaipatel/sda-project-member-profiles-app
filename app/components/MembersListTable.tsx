@@ -55,10 +55,12 @@ export function MembersListTable({
   ];
   const [sortSelected, setSortSelected] = useState(["updated_at asc"]);
   const { mode, setMode } = useSetIndexFiltersMode(IndexFiltersMode.Filtering);
-  const onHandleCancel = () => {};
+  const onHandleCancel = () => {
+    setQueryValue("");
+  };
 
   const [taggedWith, setTaggedWith] = useState<string | undefined>("");
-  const [queryValue, setQueryValue] = useState<string | undefined>(undefined);
+  const [queryValue, setQueryValue] = useState<string>("");
 
   const handleQueryValueChange = useCallback(
     (value: string) => setQueryValue(value),
@@ -115,7 +117,7 @@ export function MembersListTable({
     endCursor: Maybe<string> | undefined;
   }) => {
     if (!endCursor) return;
-    await fetcher.submit({ endCursor, direction: "next", selectedTab, _action: "next", sortSelected: sortSelected[0] }, { method: "POST" });
+    await fetcher.submit({ endCursor, queryValue, direction: "next", selectedTab, _action: "next", sortSelected: sortSelected[0] }, { method: "POST" });
   };
 
   const handleOnPrevious = async ({
@@ -125,7 +127,7 @@ export function MembersListTable({
   }) => {
     if (!startCursor) return;
     await fetcher.submit(
-      { startCursor, direction: "previous", selectedTab, _action: "prev", sortSelected: sortSelected[0] },
+      { startCursor, queryValue, direction: "previous", selectedTab, _action: "prev", sortSelected: sortSelected[0] },
       { method: "POST" },
     );
   };
@@ -142,10 +144,17 @@ export function MembersListTable({
     console.log("sort changed to: ", selected);
     setSortSelected(selected);
     await fetcher.submit(
-      { selectedTab, sortSelected: selected[0], _action: "sort_changed" },
+      { selectedTab, queryValue, sortSelected: selected[0], _action: "sort_changed" },
       { method: "POST" },
     );
   };
+
+  useEffect(() => {
+    fetcher.submit(
+      { selectedTab, queryValue, _action: "query_changed", sortSelected: sortSelected[0] },
+      { method: "POST" },
+    );
+  } , [queryValue]);
 
   return (
     <Card padding={"0"}>
