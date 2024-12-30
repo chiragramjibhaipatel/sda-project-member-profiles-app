@@ -18,15 +18,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: LoaderFunctionArgs) => {
   const { admin: {graphql} } = await authenticate.admin(request);
   const formData = await request.formData();
-  const { startCursor, endCursor, direction, selectedTab, _action } = Object.fromEntries(
+  const { startCursor, endCursor, direction, selectedTab, _action, sortSelected } = Object.fromEntries(
     formData,
-  ) as { startCursor?: string; endCursor?: string; direction: string, selectedTab?: string, _action?: string };
+  ) as { startCursor?: string; endCursor?: string; direction: string, selectedTab?: string, _action?: string, sortSelected?: string };
   if (_action === "tab_changed" && selectedTab) {
     console.log(`Tab changed to: ${selectedTab}`);
-    const { members } = await getMembers({ graphql, selectedTab });
+    const { members } = await getMembers({
+      graphql,
+      selectedTab,
+      sortSelected,
+    });
     return json({ members });
   }
-  const { members } = await getMembers({ graphql, startCursor, endCursor, direction, selectedTab });
+  const { members } = await getMembers({
+    graphql,
+    startCursor,
+    endCursor,
+    direction,
+    selectedTab,
+    sortSelected,
+  });
   return json({ members });
 };
 

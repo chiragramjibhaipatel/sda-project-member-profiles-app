@@ -1,13 +1,9 @@
 import { GetAllMembersQuery } from "~/types/admin.generated";
 import {
-  TextField,
   IndexTable,
   IndexFilters,
   useSetIndexFiltersMode,
   Text,
-  ChoiceList,
-  RangeSlider,
-  Badge,
   IndexFiltersMode,
   useBreakpoints,
   Card,
@@ -32,8 +28,6 @@ export function MembersListTable({
     }
   }, [fetcher.data]);
   
-  const sleep = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
   const [itemStrings, setItemStrings] = useState([
     "All",
     "Founders",
@@ -43,11 +37,6 @@ export function MembersListTable({
   
   const [selectedTab, setSelectedTab] = useState(itemStrings[0]);
   
-  function handleTabChange(item: string) {
-    setSelectedTab(item);
-    fetcher.submit({ selectedTab: item, _action : "tab_changed" }, { method: "POST" });
-  }
-
   const tabs: TabProps[] = itemStrings.map((item, index) => ({
     content: item,
     index,
@@ -57,23 +46,14 @@ export function MembersListTable({
     
   }));
   const [selected, setSelected] = useState(0);
-  const onCreateNewView = async (value: string) => {
-    await sleep(500);
-    setItemStrings([...itemStrings, value]);
-    setSelected(itemStrings.length);
-    return true;
-  };
+  
   const sortOptions: IndexFiltersProps["sortOptions"] = [
-    { label: "Order", value: "order asc", directionLabel: "Ascending" },
-    { label: "Order", value: "order desc", directionLabel: "Descending" },
-    { label: "Customer", value: "customer asc", directionLabel: "A-Z" },
-    { label: "Customer", value: "customer desc", directionLabel: "Z-A" },
-    { label: "Date", value: "date asc", directionLabel: "A-Z" },
-    { label: "Date", value: "date desc", directionLabel: "Z-A" },
-    { label: "Total", value: "total asc", directionLabel: "Ascending" },
-    { label: "Total", value: "total desc", directionLabel: "Descending" },
+    { label: "Member", value: "display_name asc", directionLabel: "A-Z" },
+    { label: "Member", value: "display_name desc", directionLabel: "Z-A" },
+    { label: "Update Date", value: "updated_at asc", directionLabel: "A-Z" },
+    { label: "Update Date", value: "updated_at desc", directionLabel: "Z-A" },
   ];
-  const [sortSelected, setSortSelected] = useState(["order asc"]);
+  const [sortSelected, setSortSelected] = useState(["updated_at asc"]);
   const { mode, setMode } = useSetIndexFiltersMode(IndexFiltersMode.Filtering);
   const onHandleCancel = () => {};
 
@@ -135,7 +115,7 @@ export function MembersListTable({
     endCursor: Maybe<string> | undefined;
   }) => {
     if (!endCursor) return;
-    await fetcher.submit({ endCursor, direction: "next", selectedTab, _action: "next" }, { method: "POST" });
+    await fetcher.submit({ endCursor, direction: "next", selectedTab, _action: "next", sortSelected: sortSelected[0] }, { method: "POST" });
   };
 
   const handleOnPrevious = async ({
@@ -145,7 +125,24 @@ export function MembersListTable({
   }) => {
     if (!startCursor) return;
     await fetcher.submit(
-      { startCursor, direction: "previous", selectedTab, _action: "prev" },
+      { startCursor, direction: "previous", selectedTab, _action: "prev", sortSelected: sortSelected[0] },
+      { method: "POST" },
+    );
+  };
+
+  function handleTabChange(item: string) {
+    setSelectedTab(item);
+    fetcher.submit(
+      { selectedTab: item, _action: "tab_changed", sortSelected: sortSelected[0] },
+      { method: "POST" },
+    );
+  }
+
+  const handleSortChange = async (selected: string[]) => {
+    console.log("sort changed to: ", selected);
+    setSortSelected(selected);
+    await fetcher.submit(
+      { selectedTab, sortSelected: selected[0], _action: "sort_changed" },
       { method: "POST" },
     );
   };
@@ -160,7 +157,7 @@ export function MembersListTable({
         queryPlaceholder="Searching in all members"
         onQueryChange={handleQueryValueChange}
         onQueryClear={() => setQueryValue("")}
-        onSort={setSortSelected}
+        onSort={handleSortChange}
         cancelAction={{
           onAction: onHandleCancel,
           disabled: false,

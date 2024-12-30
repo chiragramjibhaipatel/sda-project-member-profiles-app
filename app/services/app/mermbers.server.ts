@@ -7,25 +7,25 @@ export async function getMembers({
   startCursor,
   endCursor,
   direction = "next",
-  reverse = false,
   selectedTab,
+  sortSelected = "updated_at asc",
 }: {
   graphql: AdminGraphqlClient;
   startCursor?: string;
   endCursor?: string;
   direction?: string;
-  reverse?: boolean;
   selectedTab?: string;
+  sortSelected?: string;
 }) {
-
   let query = "";
-  query = getQuery({selectedTab})
-  
-    
+  query = getQuery({ selectedTab });
+  const sortKey = sortSelected.split(" ")[0];
+  const reverse = sortSelected.includes("desc");
+
   const variables = {
     type: "member_profile",
     query,
-    sortKey: "updated_at",
+    sortKey,
     reverse,
     first: direction === "next" ? 50 : undefined,
     after: direction === "next" ? endCursor : undefined,
