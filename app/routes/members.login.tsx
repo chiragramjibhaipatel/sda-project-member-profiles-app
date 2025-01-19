@@ -23,27 +23,24 @@ const LoginForm = z.object({
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	checkHoneypot(formData);
-	console.log("After Honeypot")
 	const { admin } = await unauthenticated.admin(process.env.SHOP);
-	console.log("After Admin")
 
 	const submission = await parseWithZod(formData, {
 		schema: () =>
 			LoginForm.transform(async (data, ctx) => {
 				const { username, password } = data;
-				const memberPassword = await validateLogin({ admin, username, password });
-				if (!memberPassword) {
+				const { isValidLogin, handle, needReset } = await validateLogin({ admin, username, password });
+				if (!isValidLogin) {
 					ctx.addIssue({
 						code: 'custom',
 						message: 'Invalid username or password',
 					})
 					return z.NEVER
 				}
-				return { ...data, handle: memberPassword.handle, needReset: memberPassword.needReset }
+				return { ...data, handle, needReset }
 			}),
 		async: true
 	});
-	console.log("After Submission")
 	if (submission.status !== 'success') {
 		return json(submission.reply());
 	}
@@ -51,8 +48,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const cookieSession = await sessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
-	const { handle } = submission.value;
+	const { handle, needReset } = submission.value;
 	cookieSession.set('handle', handle);
+	if (needReset) {
+		return redirect(`/members/${handle}/reset-password`, { headers: { 'Set-Cookie': await sessionStorage.commitSession(cookieSession) } });
+	} 
 	return redirect(`/members/${handle}`, { headers: { 'Set-Cookie': await sessionStorage.commitSession(cookieSession) } });
 }
 

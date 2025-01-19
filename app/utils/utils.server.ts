@@ -140,7 +140,7 @@ export const validateLogin = async ({
   try {
     const memberPassword = await getMemberPasswordByEmail({ admin, username });
     if (!memberPassword) {
-      return null;
+      return { isValidLogin: false, handle: null, needReset: false };
     }
     const isValidLogin = await bcrypt.compare(password, memberPassword.hashedPassword);
     return {
@@ -150,7 +150,7 @@ export const validateLogin = async ({
     };
   } catch (e) {
     console.error(e);
-    return null;
+    return { isValidLogin: false, handle: null, needReset: false };
   }
 };
 

@@ -15,7 +15,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { unauthenticated } from "~/shopify.server";
 import { getMemberByHandle, updateMember } from "~/utils/utils.server";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useParams, useNavigate } from "@remix-run/react";
 import { sessionStorage } from "~/session.server";
 import z from "zod";
 import { useIsPending } from "~/utils/misc";
@@ -33,6 +33,7 @@ import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
 import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
 import { LinksWrapper } from "~/components/LinksWrapper";
 import { RichTextEditor } from "~/components/richtexteditor";
+import invariant from "tiny-invariant";
 
 const validLanguages = [
   "English",
@@ -81,6 +82,7 @@ const MemberData = z.object({
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { handle } = params;
+  invariant(handle, "Handle is required");
   const cookieSession = await sessionStorage.getSession(
     request.headers.get("cookie"),
   );
@@ -97,7 +99,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     return json({ member: null });
   }
   const { admin } = await unauthenticated.admin(process.env.SHOP);
-  let member: { [p: string]: any; id: string } = await getMemberByHandle({
+  let member= await getMemberByHandle({
     admin,
     handle,
   });
@@ -146,8 +148,10 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function MemberDashboard() {
   const loaderData = useLoaderData<typeof loader>();
+  const { handle } = useParams();
   let actionData = useActionData<typeof loader>();
   const isPending = useIsPending();
+  const navigate = useNavigate();
 
   const [form, fields] = useForm({
     id: "member-form",
@@ -163,11 +167,19 @@ export default function MemberDashboard() {
   const tagline = useInputControl(fields.tagline);
   const email = useInputControl(fields.email);
 
+  const handleResetPassword = () => {
+    navigate(`/members/${handle}/reset-password`);
+  };
+
   return (
     <Page
       title={`Hello ${name.value}👋`}
       fullWidth={false}
       primaryAction={<LogoutForm />}
+      secondaryActions={[{
+        content: "Reset Password",
+        onAction: handleResetPassword
+      }]}
     >
       <FormProvider context={form.context}>
         <Form method={"POST"} {...getFormProps(form)} onSubmit={form.onSubmit}>
