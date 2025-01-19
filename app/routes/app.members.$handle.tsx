@@ -34,8 +34,7 @@ import {
 import { useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import invariant from "tiny-invariant";
-import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
-import { useIsPending } from "~/utils/misc";
+import { MemberProfileSchema, MemberProfileSchemaWithPassword } from "~/zodschema/MemberProfileSchema";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -55,19 +54,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
 
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: MemberProfileSchema });
-
-  if (submission.status !== "success") {
-    return json(submission.reply());
-  }
-
-  const { id, name, email, role, password } = submission.value;
-  const { id: appInstallationId } = await getAppInstallationId(admin);
   let member;
+
   if (handle === "new") {
+    const submission = parseWithZod(formData, { schema: MemberProfileSchemaWithPassword });
+    console.log("submission done");
+    if (submission.status !== "success") {
+      console.log("submission failed");
+      return json(submission.reply());
+    }
+    const { name, email, role, password } = submission.value
+    console.log("submission success");
+    const { id: appInstallationId } = await getAppInstallationId(admin);
+    console.log("appInstallationId", appInstallationId);
     member = await createMember({ name, email, role, admin });
-    invariant(password, "password is required");
     const { hashedPassword } = await createHashedPassword({ password });
+    console.log("hashedPassword", hashedPassword);
     await storeHashedPassword({
       admin,
       appInstallationId,
@@ -75,8 +77,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       handle,
       hashedPassword,
     });
+    console.log("redirecting to", `/app/members/${member.handle}`);
     return redirect(`/app/members/${member.handle}`);
   } else {
+    const submission = parseWithZod(formData, { schema: MemberProfileSchema });
+    if (submission.status !== "success") {
+      return json(submission.reply());
+    }
+    const { id, name, email, role } = submission.value;
     invariant(id, "Id is required");
     member = await updateMember({ id, name, role, admin });
     return null;
@@ -86,19 +94,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 export default function Member() {
   const { member } = useLoaderData<typeof loader>();
   const lastResult = useActionData<typeof action>();
+  const isNew = member === null;
 
   const navigation = useNavigation();
-  const loading = navigation.state === "submitting";
+  const loading = navigation.state !== "idle" && navigation.formData !== undefined;
 
   const [form, fields] = useForm({
     lastResult: lastResult,
     defaultValue: member,
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: MemberProfileSchema });
+      return parseWithZod(formData, { schema: isNew ? MemberProfileSchemaWithPassword : MemberProfileSchema });
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
   });
+
+  console.log("lastResult", lastResult);
+  console.log("loaderData", member);
 
   const name = useInputControl(fields.name);
   const email = useInputControl(fields.email);
@@ -106,8 +118,9 @@ export default function Member() {
   const password = useInputControl(fields.password);
   const confirmPassword = useInputControl(fields.confirmPassword);
   const id = useInputControl(fields.id);
-  const isNew = member === null;
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  console.log("id:", id.value);
 
   const handleRoleChange = (newValue: boolean, id: string) => {
     role.change(id);
@@ -237,7 +250,7 @@ export default function Member() {
   );
 }
 
-function FakeMembersCreateButton({}) {
+function FakeMembersCreateButton({ }) {
   const fetcher = useFetcher();
 
   const handleSubmit = async (event: React.FormEvent) => {

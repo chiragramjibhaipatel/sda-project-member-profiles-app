@@ -186,7 +186,7 @@ export const getMemberByHandle = async ({
   const submission = MemberProfileSchema.safeParse({id: metaobjectByHandle.id, ...member});
   if (!submission.success) {
     console.error("submission.error", submission.error);
-    throw new Error("Something went wrong while fetching the member");
+    throw new Error("Something went wrong while parsing the member data");
   }
   return submission.data;
 };
