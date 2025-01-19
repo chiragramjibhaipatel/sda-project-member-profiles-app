@@ -58,26 +58,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (handle === "new") {
     const submission = parseWithZod(formData, { schema: MemberProfileSchemaWithPassword });
-    console.log("submission done");
     if (submission.status !== "success") {
-      console.log("submission failed");
       return json(submission.reply());
     }
     const { name, email, role, password } = submission.value
-    console.log("submission success");
     const { id: appInstallationId } = await getAppInstallationId(admin);
-    console.log("appInstallationId", appInstallationId);
     member = await createMember({ name, email, role, admin });
     const { hashedPassword } = await createHashedPassword({ password });
-    console.log("hashedPassword", hashedPassword);
     await storeHashedPassword({
       admin,
       appInstallationId,
       email,
-      handle,
+      handle: member.handle,
       hashedPassword,
+      isNew: true,
     });
-    console.log("redirecting to", `/app/members/${member.handle}`);
     return redirect(`/app/members/${member.handle}`);
   } else {
     const submission = parseWithZod(formData, { schema: MemberProfileSchema });
@@ -184,36 +179,40 @@ export default function Member() {
                   message={fields.role.errors?.join() || ""}
                 />
               </InlineStack>
-              <TextField
-                id="password"
-                label="Paasword"
-                type={isPasswordVisible ? "text" : "password"}
-                value={password.value}
-                onChange={password.change}
-                name={fields.password.name}
-                autoComplete="off"
-                connectedRight={
-                  <Button
-                    icon={isPasswordVisible ? HideIcon : ViewIcon}
-                    onClick={() =>
-                      setIsPasswordVisible((prevState) => !prevState)
+              {isNew ? (
+                <>
+                  <TextField
+                    id="password"
+                    label="Paasword"
+                    type={isPasswordVisible ? "text" : "password"}
+                    value={password.value}
+                    onChange={password.change}
+                    name={fields.password.name}
+                    autoComplete="off"
+                    connectedRight={
+                      <Button
+                        icon={isPasswordVisible ? HideIcon : ViewIcon}
+                        onClick={() =>
+                          setIsPasswordVisible((prevState) => !prevState)
+                        }
+                      />
                     }
+                    requiredIndicator={true}
+                    error={fields.password.errors}
                   />
-                }
-                requiredIndicator={true}
-                error={fields.password.errors}
-              />
-              <TextField
-                id="confirmPassword"
-                label="Confirm Password"
-                type={isPasswordVisible ? "text" : "password"}
-                value={confirmPassword.value}
-                onChange={confirmPassword.change}
-                name={fields.confirmPassword.name}
-                autoComplete="off"
-                requiredIndicator={true}
-                error={fields.confirmPassword.errors}
-              />
+                  <TextField
+                    id="confirmPassword"
+                    label="Confirm Password"
+                    type={isPasswordVisible ? "text" : "password"}
+                    value={confirmPassword.value}
+                    onChange={confirmPassword.change}
+                    name={fields.confirmPassword.name}
+                    autoComplete="off"
+                    requiredIndicator={true}
+                    error={fields.confirmPassword.errors}
+                  />
+                </>
+              ) : null}
               <Button
                 submit
                 variant={"primary"}

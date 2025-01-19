@@ -17,6 +17,7 @@ import invariant from "tiny-invariant";
 import { MetaobjectField } from "~/types/admin.types";
 import UpdateMember from "~/graphql/UpdateMember";
 import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
+import { MemberPasswordSchema } from "~/zodschema/MemberPassword";
 
 export const createHashedPassword = async ({
   password,
@@ -50,12 +51,14 @@ export const storeHashedPassword = async ({
   email: key,
   handle,
   admin,
+  isNew = false,
 }: {
   appInstallationId: any;
   hashedPassword: string;
   admin: AdminApiContext;
   email: string;
   handle: string;
+  isNew?: boolean;
 }) => {
   const namespace = "sda_member_hashed_password";
   const type = "json";
@@ -65,7 +68,7 @@ export const storeHashedPassword = async ({
         ownerId,
         namespace,
         key,
-        value: JSON.stringify({ handle, hashedPassword }),
+        value: JSON.stringify({ handle, hashedPassword, needReset: isNew }),
         type,
       },
     },
@@ -135,31 +138,48 @@ export const validateLogin = async ({
   username: string;
 }) => {
   try {
-    const response = await admin.graphql(GetMemberPasswordByEmail, {
-      variables: {
-        key: username,
-      },
-    });
-    const { data } = (await response.json()) as {
-      data: GetMemberPasswordByEmailQuery;
-    };
-    const { metafield } = data.currentAppInstallation;
-    if (!metafield) {
-      return { isValidLogin: false };
+    const memberPassword = await getMemberPasswordByEmail({ admin, username });
+    if (!memberPassword) {
+      return null;
     }
-    const { handle, hashedPassword } = JSON.parse(metafield.value);
-    if (!hashedPassword || !handle) {
-      return { isValidLogin: false };
-    }
+    const isValidLogin = await bcrypt.compare(password, memberPassword.hashedPassword);
     return {
-      isValidLogin: await bcrypt.compare(password, hashedPassword),
-      handle,
+      isValidLogin,
+      handle: memberPassword.handle,
+      needReset: memberPassword.needReset,
     };
   } catch (e) {
     console.error(e);
-    return { isValidLogin: false };
+    return null;
   }
 };
+
+export const getMemberPasswordByEmail = async ({
+  admin,
+  username,
+}: {
+  admin: AdminApiContext;
+  username: string;
+}) => {
+  const response = await admin.graphql(GetMemberPasswordByEmail, {
+    variables: {
+      key: username,
+    },
+  });
+  const { data } = (await response.json()) as {
+    data: GetMemberPasswordByEmailQuery;
+  };
+  const { metafield } = data.currentAppInstallation;
+  if (!metafield) {
+    return null;
+  }
+  const submission = MemberPasswordSchema.safeParse(JSON.parse(metafield.value))
+  if (!submission.success) {
+    return null;
+  }
+  const { handle, hashedPassword, needReset } = submission.data;
+  return { handle, hashedPassword, needReset };
+}
 
 export const getMemberByHandle = async ({
   admin,
@@ -178,12 +198,10 @@ export const getMemberByHandle = async ({
   });
   const { data } = (await response.json()) as { data: GetMemberByHandleQuery };
   const { metaobjectByHandle } = data;
-  console.log("metaobjectByHandle", metaobjectByHandle);
   invariant(metaobjectByHandle, "No metaobjectByHandle in response");
 
   const member = mapToSchema(metaobjectByHandle.fields);
-  console.log("member", member);
-  const submission = MemberProfileSchema.safeParse({id: metaobjectByHandle.id, ...member});
+  const submission = MemberProfileSchema.safeParse({ id: metaobjectByHandle.id, ...member });
   if (!submission.success) {
     console.error("submission.error", submission.error);
     throw new Error("Something went wrong while parsing the member data");
@@ -204,7 +222,7 @@ export const updateMember = async ({
 }) => {
   let input = convertInputToGqlFormat({ name, role });
   // console.log("input", input);
-  const response = await admin.graphql(UpdateMember,{
+  const response = await admin.graphql(UpdateMember, {
     variables: {
       id,
       metaobject: {
@@ -212,11 +230,11 @@ export const updateMember = async ({
       },
     },
   });
-  const {data} = await response.json() as {data: UpdateMemberMutation};
+  const { data } = await response.json() as { data: UpdateMemberMutation };
 
   const { metaobjectUpdate } = data;
   invariant(metaobjectUpdate, "No metaobjectUpdate in response");
-  
+
   if (metaobjectUpdate?.userErrors.length > 0) {
     console.error("userErrors", JSON.stringify(metaobjectUpdate.userErrors));
     throw new Error("Something went wrong while updating the member");
