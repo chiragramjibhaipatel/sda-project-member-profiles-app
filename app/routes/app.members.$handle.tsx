@@ -100,6 +100,7 @@ export default function Member() {
   const loading = navigation.state !== "idle" && navigation.formData !== undefined;
 
   const [form, fields] = useForm({
+    id: `member-form-${isNew ? "new" : member?.id}`,
     lastResult: lastResult,
     defaultValue: member,
     onValidate({ formData }) {
@@ -108,9 +109,6 @@ export default function Member() {
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
   });
-
-  console.log("lastResult", lastResult);
-  console.log("loaderData", member);
 
   const name = useInputControl(fields.name);
   const email = useInputControl(fields.email);
@@ -134,7 +132,7 @@ export default function Member() {
       <BlockStack gap={"400"}>
         <Card>
           <Form method="post" id={form.id} onSubmit={form.onSubmit}>
-            <input type="hidden" name="id" value={id.value} />
+            <input type="hidden" name="id" value={id.value || ""} />
             <FormLayout>
               <TextField
                 id="name"
