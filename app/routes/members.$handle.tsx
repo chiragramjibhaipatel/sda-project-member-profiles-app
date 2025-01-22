@@ -10,7 +10,6 @@ import {
   TextField,
 } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
-import React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { unauthenticated } from "~/shopify.server";
@@ -32,7 +31,6 @@ import { ProfilePhoto } from "~/components/ProfilePhoto";
 import { ProfileVisibilityToggle } from "~/components/ProfileVisibilityToggle";
 import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
 import { LinksWrapper } from "~/components/LinksWrapper";
-import { RichTextEditor } from "~/components/richtexteditor";
 import invariant from "tiny-invariant";
 
 const validLanguages = [
@@ -209,11 +207,8 @@ export default function MemberDashboard() {
                         />
                       </FormLayout>
                     </InlineGrid>
-                    {/*<RichTextEditorWrapper description={fields.description.name}/>*/}
-                    <RichTextEditor description={fields.description.name} />
                   </FormLayout>
                 </Card>
-                <Card>{/*<ServicesWrapper />*/}</Card>
                 <Card>
                   <LinksWrapper
                     website={fields.website.name}
