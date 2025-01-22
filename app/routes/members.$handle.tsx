@@ -194,7 +194,6 @@ export default function MemberDashboard() {
                           onChange={tagline.change}
                           autoComplete={"off"}
                           error={fields.tagline.errors}
-                          multiline={2}
                         />
                       </FormLayout>
                     </InlineGrid>
