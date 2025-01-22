@@ -34,7 +34,7 @@ import {
 import { useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import invariant from "tiny-invariant";
-import { MemberProfileSchema, MemberProfileSchemaWithPassword } from "~/zodschema/MemberProfileSchema";
+import { MemberProfileSchemaForAdmin, MemberProfileSchemaWithPassword, MemberProfileSchemaWithPasswordType } from "~/zodschema/MemberProfileSchema";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -44,7 +44,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (handle === "new") {
     return { member: null };
   }
-  const member = await getMemberByHandle({ handle, admin });
+  const member = await getMemberByHandle({ handle, admin, isAdmin: true }) as MemberProfileSchemaWithPasswordType;
   return { member };
 };
 
@@ -75,7 +75,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     return redirect(`/app/members/${member.handle}`);
   } else {
-    const submission = parseWithZod(formData, { schema: MemberProfileSchema });
+    const submission = parseWithZod(formData, { schema: MemberProfileSchemaForAdmin });
     if (submission.status !== "success") {
       return json(submission.reply());
     }
@@ -99,7 +99,7 @@ export default function Member() {
     lastResult: lastResult,
     defaultValue: member,
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: isNew ? MemberProfileSchemaWithPassword : MemberProfileSchema });
+      return parseWithZod(formData, { schema: isNew ? MemberProfileSchemaWithPassword : MemberProfileSchemaForAdmin });
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",

@@ -83,31 +83,38 @@ export type NonNullMetaobjectField = Exclude<
   NullMetaobjectField
 >;
 
+export const MemberProfileSchemaForAdmin = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().min(3),
+    role: z.enum(["Founder", "Founding Member", "Member"]),
+    email: z.string().min(3).email(),
+  });
 
 export const MemberProfileSchema = z
   .object({
     id: z.string().optional(),
     name: z.string().min(3),
-    profile: z.boolean(),
-    open_to_work: z.boolean().optional().nullable(),
+    email: z.string().min(3).email(),
+    profile: z.preprocess((value) => value === "on" || value === true, z.boolean()),
+    open_to_work: z.preprocess((value) => value === "on" || value === true, z.boolean()),
     tagline: z.string().optional().nullable(),
     working_hours: z.string().optional().nullable(),
     languages: z.array(z.string()).optional().nullable(),
-    role: z.enum(["Founder", "Founding Member", "Member"]),
     website: z.string().url().optional().nullable(),
     twitter: z.string().url().optional().nullable(),
     linked_in: z.string().url().optional().nullable(),
     github: z.string().url().optional().nullable(),
     you_tube: z.string().url().optional().nullable(),
     alternative_contact: z.string().url().optional().nullable(),
-    email: z.string().min(3).email(),
     primary_service: z.string().optional().nullable(),
     services: z.array(z.string()).optional().nullable(),
     technologies: z.array(z.string()).optional().nullable(),
-    industry_experience: z.array(z.string()).optional().nullable(),
+    // industry_experience: z.array(z.string()).optional().nullable(),
     description: z.string().optional().nullable(),
   });
 
+export type MemberProfileSchemaType = z.infer<typeof MemberProfileSchema>;
 
 const PasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -115,7 +122,7 @@ const PasswordSchema = z.object({
 })
 
 
-export const MemberProfileSchemaWithPassword = MemberProfileSchema.merge(PasswordSchema).refine(
+export const MemberProfileSchemaWithPassword = MemberProfileSchemaForAdmin.merge(PasswordSchema).refine(
   ({ confirmPassword, password }) => password === confirmPassword,
   {
     message: "Passwords do not match",
@@ -123,12 +130,12 @@ export const MemberProfileSchemaWithPassword = MemberProfileSchema.merge(Passwor
   }
 );
 
-
+export type MemberProfileSchemaWithPasswordType = z.infer<typeof MemberProfileSchemaWithPassword>;
 
 export function mapAdminResponseToMetaobjectField(
   field: Pick<AdminMetaobjectField, 'key' | 'value' | 'type'>,
 ): MetaobjectField {
-  const {key, type, value} = field;
+  const { key, type, value } = field;
 
   if (!value) {
     return {

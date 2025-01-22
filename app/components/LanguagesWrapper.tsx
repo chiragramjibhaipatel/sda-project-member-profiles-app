@@ -28,7 +28,7 @@ export function LanguagesWrapper({
     [],
   );
   const [selectedOptions, setSelectedOptions] = useState(
-    languagesInput.value || [],
+    languagesInput.value as string[] || [],
   );
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState(deselectedOptions);

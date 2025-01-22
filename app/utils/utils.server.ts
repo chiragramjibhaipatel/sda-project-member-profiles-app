@@ -15,7 +15,7 @@ import {
 } from "~/types/admin.generated";
 import invariant from "tiny-invariant";
 import UpdateMember from "~/graphql/UpdateMember";
-import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MetaobjectField } from "~/zodschema/MemberProfileSchema";
+import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MemberProfileSchemaForAdmin, MetaobjectField } from "~/zodschema/MemberProfileSchema";
 import { MemberPasswordSchema } from "~/zodschema/MemberPassword";
 
 export const createHashedPassword = async ({
@@ -183,9 +183,11 @@ export const getMemberPasswordByEmail = async ({
 export const getMemberByHandle = async ({
   admin,
   handle,
+  isAdmin = false,
 }: {
   admin: AdminApiContext;
   handle: string;
+  isAdmin?: boolean;
 }) => {
   const response = await admin.graphql(GetMemberByHandle, {
     variables: {
@@ -201,7 +203,7 @@ export const getMemberByHandle = async ({
 
   const typedMetaobjectFields = metaobjectByHandle.fields.map(mapAdminResponseToMetaobjectField);
   const member = {id: metaobjectByHandle.id, ...mapToSchema(typedMetaobjectFields)};
-  const submission = MemberProfileSchema.safeParse(member);
+  const submission = isAdmin ? MemberProfileSchemaForAdmin.safeParse(member) : MemberProfileSchema.safeParse(member);
   if (!submission.success) {
     console.error("submission.error", submission.error);
     throw new Error("Something went wrong while parsing the member data");

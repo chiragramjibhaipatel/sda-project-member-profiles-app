@@ -96,7 +96,7 @@ export function ProfileVisibilityToggle({
         Toggle public profile visibility. Click{" "}
         <Button variant={"plain"}> here </Button> to visit your profile.
       </Text>
-      <InlineError message={meta.errors?.join(",")} fieldID={meta.errorId} />
+      <InlineError message={meta.errors?.join(",") || ""} fieldID={meta.errorId} />
     </BlockStack>
   );
 }
