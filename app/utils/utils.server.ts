@@ -14,9 +14,8 @@ import {
   UpdateMemberMutation,
 } from "~/types/admin.generated";
 import invariant from "tiny-invariant";
-import { MetaobjectField } from "~/types/admin.types";
 import UpdateMember from "~/graphql/UpdateMember";
-import { MemberProfileSchema } from "~/zodschema/MemberProfileSchema";
+import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MetaobjectField } from "~/zodschema/MemberProfileSchema";
 import { MemberPasswordSchema } from "~/zodschema/MemberPassword";
 
 export const createHashedPassword = async ({
@@ -200,8 +199,9 @@ export const getMemberByHandle = async ({
   const { metaobjectByHandle } = data;
   invariant(metaobjectByHandle, "No metaobjectByHandle in response");
 
-  const member = mapToSchema(metaobjectByHandle.fields);
-  const submission = MemberProfileSchema.safeParse({ id: metaobjectByHandle.id, ...member });
+  const typedMetaobjectFields = metaobjectByHandle.fields.map(mapAdminResponseToMetaobjectField);
+  const member = {id: metaobjectByHandle.id, ...mapToSchema(typedMetaobjectFields)};
+  const submission = MemberProfileSchema.safeParse(member);
   if (!submission.success) {
     console.error("submission.error", submission.error);
     throw new Error("Something went wrong while parsing the member data");
@@ -271,11 +271,11 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
 }
 
 function mapToSchema(
-  fields: Pick<MetaobjectField, "type" | "key" | "jsonValue">[],
+  fields: MetaobjectField[],
 ) {
   return fields.reduce(
     (acc, field) => {
-      acc[field.key] = field.jsonValue;
+      acc[field.key] = field.value;
       return acc;
     },
     {} as { [key: string]: any },

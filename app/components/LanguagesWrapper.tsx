@@ -17,7 +17,7 @@ export function LanguagesWrapper({
   languages,
   validLanguages,
 }: {
-  languages: FieldName<string[]>;
+  languages: FieldName<string[] | null>;
   validLanguages: string[];
 }) {
   const [meta] = useField(languages);
@@ -136,7 +136,7 @@ export function LanguagesWrapper({
           ) : null}
         </Combobox>
         <InlineStack gap={"200"}>{tagsMarkup}</InlineStack>
-        <InlineError message={meta.errors} fieldID={meta.errorId} />
+        <InlineError message={meta.errors || ""} fieldID={meta.errorId} />
       </BlockStack>
     </>
   );

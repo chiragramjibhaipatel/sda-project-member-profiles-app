@@ -92,21 +92,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       },
     });
   }
-
-  if (!handle) {
-    return json({ member: null });
-  }
   const { admin } = await unauthenticated.admin(process.env.SHOP);
   let member= await getMemberByHandle({
     admin,
     handle,
   });
-  const result = MemberData.safeParse(member);
-  if (!result.success) {
-    console.error(result.error);
-    return json({ member: null });
-  }
-  return json({ member: result.data });
+  return json({ member });
 };
 
 export const action = async ({ request, params }: LoaderFunctionArgs) => {
@@ -145,16 +136,16 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export default function MemberDashboard() {
-  const loaderData = useLoaderData<typeof loader>();
+  const { member } = useLoaderData<typeof loader>();
   const { handle } = useParams();
-  let actionData = useActionData<typeof loader>();
+  let actionData = useActionData<typeof action>();
   const isPending = useIsPending();
   const navigate = useNavigate();
 
   const [form, fields] = useForm({
-    id: "member-form",
-    lastResult: actionData?.member,
-    defaultValue: loaderData.member,
+    id: `member-form-${handle}`,
+    lastResult: actionData,
+    defaultValue: member,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: MemberData });
     },

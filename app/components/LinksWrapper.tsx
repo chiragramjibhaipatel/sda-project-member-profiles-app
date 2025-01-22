@@ -11,12 +11,12 @@ export function LinksWrapper({
   github,
   alternative_contact,
 }: {
-  website: FieldName<string>;
-  twitter: FieldName<string>;
-  linked_in: FieldName<string>;
-  github: FieldName<string>;
-  you_tube: FieldName<string>;
-  alternative_contact: FieldName<string>;
+  website: FieldName<string | null>;
+  twitter: FieldName<string | null>;
+  linked_in: FieldName<string | null>;
+  github: FieldName<string | null>;
+  you_tube: FieldName<string | null>;
+  alternative_contact: FieldName<string | null>;
 }) {
   const [metaWebsite] = useField(website);
   const metaWebsiteInput = useInputControl(metaWebsite);

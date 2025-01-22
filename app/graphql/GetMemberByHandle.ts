@@ -4,7 +4,7 @@ query GetMemberByHandle($handle: MetaobjectHandleInput!){
         id
         fields{
             key
-            jsonValue
+            value
             type
         }
     }

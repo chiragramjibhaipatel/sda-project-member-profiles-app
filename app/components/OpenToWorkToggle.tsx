@@ -16,8 +16,8 @@ export function OpenToWorkToggle({
   openToWork,
   workingHours,
 }: {
-  openToWork: FieldName<boolean>;
-  workingHours: FieldName<string>;
+  openToWork: FieldName<boolean | null>;
+  workingHours: FieldName<string | null>;
 }) {
   const [metaOpenToWork] = useField(openToWork);
   const metaOpenToWorkInput = useInputControl(metaOpenToWork);
@@ -30,7 +30,7 @@ export function OpenToWorkToggle({
   );
 
   const handleWorkingHoursChange = useCallback(
-    (value) => {
+    (value: string) => {
       setWorkingHoursInputValue(value);
       workingHoursInput.change(value);
     },
@@ -120,7 +120,7 @@ export function OpenToWorkToggle({
         Your profile will be visible to employers when you are open to work.
       </Text>
       <InlineError
-        message={metaOpenToWork.errors?.join(",")}
+        message={metaOpenToWork.errors?.join(",") || ""}
         fieldID={metaOpenToWork.errorId}
       />
     </BlockStack>
