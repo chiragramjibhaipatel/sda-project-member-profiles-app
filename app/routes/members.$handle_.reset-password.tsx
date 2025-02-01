@@ -35,6 +35,7 @@ const PasswordResetSchema = z.object({
 );
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
+  console.log("Inside action: members.$handle_.reset-password");
   const { handle } = params;
   invariant(handle, "Handle is required");
   const cookieSession = await sessionStorage.getSession(

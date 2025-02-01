@@ -50,6 +50,7 @@ const validLanguages = [
 ];
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  console.log("Inside loader: members.$handle");
   const { handle } = params;
   invariant(handle, "Handle is required");
   const cookieSession = await sessionStorage.getSession(
