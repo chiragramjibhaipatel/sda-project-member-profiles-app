@@ -14,7 +14,7 @@ import { useField, useInputControl } from "@conform-to/react";
 export function ProfileVisibilityToggle({
   profile,
 }: {
-  profile: FieldName<boolean>;
+  profile: FieldName<boolean | null>;
 }) {
   const [meta] = useField(profile);
   const profileInput = useInputControl(meta);
@@ -24,7 +24,7 @@ export function ProfileVisibilityToggle({
     () =>
       setEnabled((enabled) => {
         const newEnabled = !enabled;
-        profileInput.change(newEnabled ? "on" : "off");
+        profileInput.change(newEnabled ? "on" : "");
         return newEnabled;
       }),
     [profileInput],

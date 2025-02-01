@@ -16,7 +16,7 @@ export function OpenToWorkToggle({
   openToWork,
   workingHours,
 }: {
-  openToWork: FieldName<boolean>;
+  openToWork: FieldName<boolean | null>;
   workingHours: FieldName<string | null>;
 }) {
   const [metaOpenToWork] = useField(openToWork);
@@ -41,7 +41,7 @@ export function OpenToWorkToggle({
     () =>
       setEnabled((enabled) => {
         const newEnabled = !enabled;
-        metaOpenToWorkInput.change(newEnabled ? "on" : "off");
+        metaOpenToWorkInput.change(newEnabled ? "on" : "");
         return newEnabled;
       }),
     [metaOpenToWorkInput],
