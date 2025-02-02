@@ -203,6 +203,11 @@ export default function MemberDashboard() {
                     services={fields.services.name}
                   />
                 </Card>
+                <Card>
+                  <TechnologiesWrapper
+                    technologies={fields.technologies.name}
+                  />
+                </Card>
               </BlockStack>
             </Layout.Section>
             <Layout.Section variant={"oneThird"}>
@@ -221,11 +226,7 @@ export default function MemberDashboard() {
                     languages={fields.languages.name}
                   />
                 </Card>
-                <Card>
-                  <TechnologiesWrapper
-                    technologies={fields.technologies.name}
-                  />
-                </Card>
+                
                 <Card>
                   <IndustryExperienceWrapper
                     industryExperience={fields.industry_experience.name}
