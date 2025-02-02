@@ -12,6 +12,7 @@ export const MetafieldType = {
   NULL: 'null',
   URL: 'url',
   LIST_SINGLE_LINE_TEXT_FIELD: 'list.single_line_text_field',
+  RICH_TEXT_FIELD: 'rich_text_field',
 } as const;
 export type MetafieldType = ObjectValues<typeof MetafieldType>;
 
@@ -67,6 +68,11 @@ export interface ListSingleLineTextFieldMetaobjectField extends MetaobjectFieldB
   value: string[];
 }
 
+export interface RichTextFieldMetaobjectField extends MetaobjectFieldBase {
+  valueType: typeof MetafieldType.RICH_TEXT_FIELD;
+  value: string;
+}
+
 export type MetaobjectField =
   | BooleanMetaobjectField
   | DateTimeMetaobjectField
@@ -76,7 +82,8 @@ export type MetaobjectField =
   | SingleLineTextFieldMetaobjectField
   | NullMetaobjectField
   | UrlMetaobjectField
-  | ListSingleLineTextFieldMetaobjectField;
+  | ListSingleLineTextFieldMetaobjectField
+  | RichTextFieldMetaobjectField;
 
 export type NonNullMetaobjectField = Exclude<
   MetaobjectField,
@@ -111,7 +118,7 @@ export const MemberProfileSchema = z
     services: z.array(z.string()).optional().nullable(),
     technologies: z.array(z.string()).optional().nullable(),
     // industry_experience: z.array(z.string()).optional().nullable(),
-    description: z.string().optional().nullable(),
+    // description: z.any().optional().nullable(),
   });
 
 export type MemberProfileSchemaType = z.infer<typeof MemberProfileSchema>;
@@ -227,6 +234,18 @@ export function mapAdminResponseToMetaobjectField(
         key: key,
         valueType: type,
         value: listValue,
+      };
+    case MetafieldType.RICH_TEXT_FIELD:
+      let richTextFieldValue; 
+      try {
+        richTextFieldValue = JSON.parse(value);
+      } catch (error) {
+        throw new Error(`Invalid rich text value for field '${key}'`);
+      }
+      return {
+        key: key,
+        valueType: type,
+        value: richTextFieldValue,
       };
     default:
       throw new Error(

@@ -110,6 +110,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function MemberDashboard() {
   const { member } = useLoaderData<typeof loader>();
+  console.log("member", member);
   const { handle } = useParams();
   let actionData = useActionData<typeof action>();
   const isPending = useIsPending();
