@@ -14,7 +14,7 @@ import {
   UpdateMemberMutation,
 } from "~/types/admin.generated";
 import invariant from "tiny-invariant";
-import UpdateMemberByAdmin from "~/graphql/UpdateMember";
+import UpdateMember from "~/graphql/UpdateMember";
 import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MemberProfileSchemaForAdmin, MetaobjectField } from "~/zodschema/MemberProfileSchema";
 import { MemberPasswordSchema } from "~/zodschema/MemberPassword";
 
@@ -211,7 +211,7 @@ export const getMemberByHandle = async ({
   return submission.data;
 };
 
-export const updateMemberByAdmin = async ({
+export const updateMember = async ({
   id,
   name,
   role,
@@ -224,7 +224,7 @@ export const updateMemberByAdmin = async ({
 }) => {
   let input = convertInputToGqlFormat({ name, role });
   // console.log("input", input);
-  const response = await admin.graphql(UpdateMemberByAdmin, {
+  const response = await admin.graphql(UpdateMember, {
     variables: {
       id,
       metaobject: {

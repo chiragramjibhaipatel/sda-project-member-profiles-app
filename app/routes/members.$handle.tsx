@@ -13,7 +13,7 @@ import "@shopify/polaris/build/esm/styles.css";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { unauthenticated } from "~/shopify.server";
-import { getMemberByHandle } from "~/utils/utils.server";
+import { getMemberByHandle, updateMember } from "~/utils/utils.server";
 import { Form, useActionData, useLoaderData, useParams, useNavigate } from "@remix-run/react";
 import { sessionStorage } from "~/session.server";
 import { useIsPending } from "~/utils/misc";
@@ -74,10 +74,9 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   const { id, ...fields } = submission.value;
-  invariant(id, "Id is required");
   console.log("new fields", fields);
   try {
-    // await updateMemberByAdmin({ admin, id, ...fields });
+    // await updateMember({ admin, id, ...fields });
     // let member: { [p: string]: any; id: string } = await getMemberByHandle({
     //   admin,
     //   handle,

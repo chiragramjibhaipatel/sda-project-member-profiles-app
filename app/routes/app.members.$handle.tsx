@@ -29,7 +29,7 @@ import {
   getAppInstallationId,
   getMemberByHandle,
   storeHashedPassword,
-  updateMemberByAdmin,
+  updateMember,
 } from "~/utils/utils.server";
 import { useForm, useInputControl } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
@@ -81,7 +81,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
     const { id, name, email, role } = submission.value;
     invariant(id, "Id is required");
-    member = await updateMemberByAdmin({ id, name, role, admin });
+    member = await updateMember({ id, name, role, admin });
     return null;
   }
 };
