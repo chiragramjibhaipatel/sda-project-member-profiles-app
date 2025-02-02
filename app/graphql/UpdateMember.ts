@@ -1,4 +1,4 @@
-const UpdateMember = `#graphql
+const UpdateMemberByAdmin = `#graphql
 mutation UpdateMember($id: ID!, $metaobject: MetaobjectUpdateInput!){
     metaobjectUpdate(id: $id, metaobject: $metaobject) {
         metaobject {
@@ -13,4 +13,4 @@ mutation UpdateMember($id: ID!, $metaobject: MetaobjectUpdateInput!){
 }
 `;
 
-export default UpdateMember;
+export default UpdateMemberByAdmin;
