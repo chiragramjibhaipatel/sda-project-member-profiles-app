@@ -273,15 +273,18 @@ function convertInputToGqlFormat(input: { [key: string]: any }) {
 function mapToSchema(
   fields: MetaobjectField[],
 ) {
-  return fields.reduce(
+  const newLocal = fields.reduce(
     (acc, field) => {
-      if(field.valueType === MetafieldType.LIST_METAOBJECT_REFERENCE){
-        acc[field.key] = field.references;
+      if (field.valueType === MetafieldType.LIST_METAOBJECT_REFERENCE) {
+        acc[field.key] = {ids: field.value, references: field.references};
+        
       } else {
         acc[field.key] = field.value;
       }
       return acc;
     },
-    {} as { [key: string]: any },
+    {} as { [key: string]: any; }
   );
+
+  return newLocal;
 }

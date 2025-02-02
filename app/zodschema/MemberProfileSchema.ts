@@ -144,7 +144,8 @@ export const MemberProfileSchema = z
     technologies: z.array(z.string()).optional().nullable(),
     industry_experience: z.array(z.string()).optional().nullable(),
     // description: z.any().optional().nullable(),
-    review: z.array(ReviewSchema).optional().nullable(),
+    review: z.object({ids: z.array(z.string()), references: z.array(ReviewSchema).optional().nullable().readonly()}).optional().nullable(), 
+    //todo: in sda store this fields is called reviews, but in my test store it is review, I have tried once to delte it and create a new field called reviews, but it is not working, so I have to keep it as review
   });
 
 export type MemberProfileSchemaType = z.infer<typeof MemberProfileSchema>;
@@ -302,7 +303,7 @@ export function mapAdminResponseToMetaobjectField(
       return {
         key: key,
         valueType: type,
-        value: value,
+        value: JSON.parse(value),
         references: listReferenceDataWithFields,
       };
     default:
