@@ -31,6 +31,7 @@ import { OpenToWorkToggle } from "~/components/OpenToWorkToggle";
 import { LinksWrapper } from "~/components/LinksWrapper";
 import invariant from "tiny-invariant";
 import { MemberProfileSchema, MemberProfileSchemaType } from "~/zodschema/MemberProfileSchema";
+import { ServicesWrapper } from "../components/ServicesWrapper";
 
 const validLanguages = [
   "English",
@@ -48,6 +49,8 @@ const validLanguages = [
   "German",
   "Greek",
 ];
+
+
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   console.log("Inside loader: members.$handle");
@@ -133,7 +136,6 @@ export default function MemberDashboard() {
   const name = useInputControl(fields.name);
   const tagline = useInputControl(fields.tagline);
   const email = useInputControl(fields.email);
-
   const handleResetPassword = () => {
     navigate(`/members/${handle}/reset-password`);
   };
@@ -206,6 +208,12 @@ export default function MemberDashboard() {
                     alternative_contact={fields.alternative_contact.name}
                   />
                 </Card>
+                <Card>
+                  <ServicesWrapper
+                    primaryService={fields.primary_service.name}
+                    services={fields.services.name}
+                  />
+                </Card>
               </BlockStack>
             </Layout.Section>
             <Layout.Section variant={"oneThird"}>
@@ -240,3 +248,6 @@ export default function MemberDashboard() {
     </FormProvider>
   );
 }
+
+
+

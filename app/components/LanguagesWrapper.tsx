@@ -69,7 +69,6 @@ export function LanguagesWrapper({
         value = [...selectedOptions, selected];
         setSelectedOptions(value);
       }
-      console.log("value", value);
       if (value.length === 0) {
         languagesInput.change("");
       } else {
