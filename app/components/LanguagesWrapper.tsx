@@ -9,7 +9,7 @@ import {
 } from "@shopify/polaris";
 
 import { SearchIcon } from "@shopify/polaris-icons";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 
@@ -30,6 +30,9 @@ export function LanguagesWrapper({
   const [selectedOptions, setSelectedOptions] = useState(
     languagesInput.value as string[] || [],
   );
+  useEffect(() => {
+    setSelectedOptions(languagesInput.value as string[] || []);
+  }, [languagesInput.value]);
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState(deselectedOptions);
 

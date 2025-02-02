@@ -7,7 +7,7 @@ import {
   InlineStack,
   Text,
 } from "@shopify/polaris";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 
@@ -19,6 +19,10 @@ export function ProfileVisibilityToggle({
   const [meta] = useField(profile);
   const profileInput = useInputControl(meta);
   const [enabled, setEnabled] = useState(profileInput.value || false);
+
+  useEffect(() => {
+    setEnabled(profileInput.value || false);
+  }, [profileInput.value]);
 
   const handleToggle = useCallback(
     () =>

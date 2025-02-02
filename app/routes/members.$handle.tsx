@@ -141,6 +141,10 @@ export default function MemberDashboard() {
     navigate("/members/logout");
   };
 
+  const handleReset = () => {
+    form.reset();
+  };
+
 
   return (
     <FormProvider context={form.context}>
@@ -149,14 +153,19 @@ export default function MemberDashboard() {
           title={`Hello ${name.value}👋`}
           fullWidth={false}
           primaryAction={ <Button loading={isPending} submit variant={"primary"} disabled={!isDirty}>Save</Button>}
-          secondaryActions={[{
-            content: "Reset Password",
-            onAction: handleResetPassword
-          },
-          {
-            content: "Logout",
-            onAction: handleLogout
-          }
+          secondaryActions={[
+            {
+              content: "Reset Password",
+              onAction: handleResetPassword
+            },
+            {
+              content: "Logout",
+              onAction: handleLogout
+            },
+            {
+              content: "Reset",
+              onAction: handleReset
+            },
           ]}
         >
           <Layout>

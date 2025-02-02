@@ -1,6 +1,6 @@
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormLayout, TextField, Text, BlockStack } from "@shopify/polaris";
 
 export function LinksWrapper({
@@ -23,6 +23,11 @@ export function LinksWrapper({
   const [metaWebsiteInputValue, setMetaWebsiteInputValue] = useState(
     metaWebsiteInput.value,
   );
+
+  useEffect(() => {
+    setMetaWebsiteInputValue(metaWebsiteInput.value || "");
+  }, [metaWebsiteInput.value]);
+
   const handleMetaWebsiteChange = (value: string) => {
     metaWebsiteInput.change(value);
     setMetaWebsiteInputValue(value);
@@ -33,6 +38,10 @@ export function LinksWrapper({
   const [metaTwitterInputValue, setMetaTwitterInputValue] = useState(
     metaTwitterInput.value,
   );
+  useEffect(() => {
+    setMetaTwitterInputValue(metaTwitterInput.value || "");
+  }, [metaTwitterInput.value]);
+
   const handleMetaTwitterChange = (value: string) => {
     metaTwitterInput.change(value);
     setMetaTwitterInputValue(value);
@@ -43,6 +52,10 @@ export function LinksWrapper({
   const [metaLinkedInInputValue, setMetaLinkedInInputValue] = useState(
     metaLinkedInInput.value,
   );
+  useEffect(() => {
+    setMetaLinkedInInputValue(metaLinkedInInput.value || "");
+  }, [metaLinkedInInput.value]);
+
   const handleMetaLinkedInChange = (value: string) => {
     metaLinkedInInput.change(value);
     setMetaLinkedInInputValue(value);
@@ -53,6 +66,10 @@ export function LinksWrapper({
   const [metaGitHubInputValue, setMetaGitHubInputValue] = useState(
     metaGitHubInput.value,
   );
+  useEffect(() => {
+    setMetaGitHubInputValue(metaGitHubInput.value || "");
+  }, [metaGitHubInput.value]);
+
   const handleMetaGitHubChange = (value: string) => {
     let newValue = value;
     if (!newValue) {
@@ -67,6 +84,10 @@ export function LinksWrapper({
   const [metaYouTubeInputValue, setMetaYouTubeInputValue] = useState(
     metaYouTubeInput.value,
   );
+  useEffect(() => {
+    setMetaYouTubeInputValue(metaYouTubeInput.value || "");
+  }, [metaYouTubeInput.value]);
+
   const handleMetaYouTubeChange = (value: string) => {
     metaYouTubeInput.change(value);
     setMetaYouTubeInputValue(value);
@@ -78,6 +99,10 @@ export function LinksWrapper({
     metaAlternativeContactInputValue,
     setMetaAlternativeContactInputValue,
   ] = useState(metaAlternativeContactInput.value);
+  useEffect(() => {
+    setMetaAlternativeContactInputValue(metaAlternativeContactInput.value || "");
+  }, [metaAlternativeContactInput.value]);
+
   const handleMetaAlternativeContactChange = (value: string) => {
     metaAlternativeContactInput.change(value);
     setMetaAlternativeContactInputValue(value);

@@ -8,7 +8,7 @@ import {
   Text,
   TextField,
 } from "@shopify/polaris";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 
@@ -23,11 +23,19 @@ export function OpenToWorkToggle({
   const metaOpenToWorkInput = useInputControl(metaOpenToWork);
   const [enabled, setEnabled] = useState(metaOpenToWorkInput.value || false);
 
+  useEffect(() => {
+    setEnabled(metaOpenToWorkInput.value || false);
+  }, [metaOpenToWorkInput.value]);
+
   const [metaWorkingHours] = useField(workingHours);
   const workingHoursInput = useInputControl(metaWorkingHours);
   const [workingHoursInputValue, setWorkingHoursInputValue] = useState(
     workingHoursInput.value || "",
   );
+
+  useEffect(() => {
+    setWorkingHoursInputValue(workingHoursInput.value || "");
+  }, [workingHoursInput.value]);
 
   const handleWorkingHoursChange = useCallback(
     (value: string) => {
