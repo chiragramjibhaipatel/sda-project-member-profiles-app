@@ -34,6 +34,7 @@ import { MemberProfileSchema, MemberProfileSchemaType } from "~/zodschema/Member
 import { ServicesWrapper } from "../components/ServicesWrapper";
 import { TechnologiesWrapper } from "../components/TechnologiesWrapper";
 import { IndustryExperienceWrapper } from "../components/IndustryExperienceWrapper";
+import ReviewsWrapper from "~/components/ReviewsWrapper";
 
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -193,6 +194,11 @@ export default function MemberDashboard() {
                 <Card>
                   <TechnologiesWrapper
                     technologies={fields.technologies.name}
+                  />
+                </Card>
+                <Card>
+                  <ReviewsWrapper
+                    reviews={fields.review.name}
                   />
                 </Card>
               </BlockStack>

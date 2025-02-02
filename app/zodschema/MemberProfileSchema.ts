@@ -77,7 +77,7 @@ export interface RichTextFieldMetaobjectField extends MetaobjectFieldBase {
 
 export interface MetaobjectReferenceMetaobjectField extends MetaobjectFieldBase {
   valueType: typeof MetafieldType.METAOBJECT_REFERENCE;
-  value:string;
+  value: string;
   reference: MetaobjectField;
 }
 
@@ -115,13 +115,23 @@ export const MemberProfileSchemaForAdmin = z
     email: z.string().min(3).email(),
   });
 
-  export const ReviewSchema = z.object({
-    id: z.string().optional(),
-    reference: z.string().optional(),
-    review_content: z.any().optional().nullable(),
-    reviewer: z.string().optional(),
-    link: z.string().url().optional().nullable(),
-  })
+export const ReviewSchema = z.object({
+  id: z.string().optional(),
+  reference: z.string().optional(),
+  reviewer: z.string().optional(),
+  link: z.string().url().optional().nullable(),
+})
+
+export type Review = z.infer<typeof ReviewSchema>;
+
+
+export const ReviewsWrapperSchema = z.object({
+  ids: z.array(z.string()),
+  references: z.array(ReviewSchema)
+})
+export type ReviewsWrapper = z.infer<typeof ReviewsWrapperSchema>;
+
+
 
 export const MemberProfileSchema = z
   .object({
@@ -144,7 +154,7 @@ export const MemberProfileSchema = z
     technologies: z.array(z.string()).optional().nullable(),
     industry_experience: z.array(z.string()).optional().nullable(),
     // description: z.any().optional().nullable(),
-    review: z.object({ids: z.array(z.string()), references: z.array(ReviewSchema).optional().nullable().readonly()}).optional().nullable(), 
+    review: ReviewsWrapperSchema.optional().nullable(),
     //todo: in sda store this fields is called reviews, but in my test store it is review, I have tried once to delte it and create a new field called reviews, but it is not working, so I have to keep it as review
   });
 
@@ -263,7 +273,7 @@ export function mapAdminResponseToMetaobjectField(
         value: listValue,
       };
     case MetafieldType.RICH_TEXT_FIELD:
-      let richTextFieldValue; 
+      let richTextFieldValue;
       try {
         richTextFieldValue = JSON.parse(value);
       } catch (error) {
@@ -276,27 +286,27 @@ export function mapAdminResponseToMetaobjectField(
       };
     case MetafieldType.METAOBJECT_REFERENCE:
       let referenceData;
-      console.log({reference})
-      if(reference && reference.__typename === "Metaobject"){
+      console.log({ reference })
+      if (reference && reference.__typename === "Metaobject") {
         let referenceFields;
         referenceFields = reference.fields.map(field => mapAdminResponseToMetaobjectField(field));
-        referenceData = {id: reference.id, ...mapToSchema(referenceFields)};
+        referenceData = { id: reference.id, ...mapToSchema(referenceFields) };
       }
       return {
         key: key,
         valueType: type,
         value: value,
-        reference: referenceData,        
+        reference: referenceData,
       };
     case MetafieldType.LIST_METAOBJECT_REFERENCE:
-      let listReferenceData : (Maybe<MetafieldReference> | undefined)[] = [];
-      if(references){
+      let listReferenceData: (Maybe<MetafieldReference> | undefined)[] = [];
+      if (references) {
         listReferenceData = references.edges.map(edge => edge.node);
       }
       let listReferenceDataWithFields = listReferenceData.map(reference => {
-        if(reference && reference.__typename === "Metaobject"){
+        if (reference && reference.__typename === "Metaobject") {
           let fields = reference.fields.map(field => mapAdminResponseToMetaobjectField(field));
-          return {id: reference.id, ...mapToSchema(fields)};
+          return { id: reference.id, ...mapToSchema(fields) };
         }
         return null;
       });
