@@ -33,6 +33,7 @@ import invariant from "tiny-invariant";
 import { MemberProfileSchema, MemberProfileSchemaType } from "~/zodschema/MemberProfileSchema";
 import { ServicesWrapper } from "../components/ServicesWrapper";
 import { TechnologiesWrapper } from "../components/TechnologiesWrapper";
+import { IndustryExperienceWrapper } from "../components/IndustryExperienceWrapper";
 
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -223,6 +224,11 @@ export default function MemberDashboard() {
                 <Card>
                   <TechnologiesWrapper
                     technologies={fields.technologies.name}
+                  />
+                </Card>
+                <Card>
+                  <IndustryExperienceWrapper
+                    industryExperience={fields.industry_experience.name}
                   />
                 </Card>
               </BlockStack>
