@@ -74,7 +74,6 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   const { id, ...fields } = submission.value;
-  console.log("new fields", fields);
   invariant(id, "Id is required");
   try {
     await updateMember({ admin, id, ...fields });
@@ -89,7 +88,6 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function MemberDashboard() {
   const { member } = useLoaderData<typeof loader>();
-  console.log("member", member);
   const { handle } = useParams();
   let actionData = useActionData<typeof action>();
   const isPending = useIsPending();
@@ -106,9 +104,6 @@ export default function MemberDashboard() {
     shouldRevalidate: "onInput",
   });
   const isDirty = JSON.stringify(form.initialValue) !== JSON.stringify(form.value);
-  console.log("form", JSON.stringify(form.initialValue));
-  console.log("form", JSON.stringify(form.value));
-  console.log("isDirty", isDirty);
   const name = useInputControl(fields.name);
   const tagline = useInputControl(fields.tagline);
   const email = useInputControl(fields.email);

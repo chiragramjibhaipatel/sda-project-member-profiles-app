@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MetaobjectField as AdminMetaobjectField } from '~/types/admin.types';
+import { MetaobjectField as AdminMetaobjectField, Maybe, MetafieldReference } from '~/types/admin.types';
 
 export type ObjectValues<T> = T[keyof T];
 export const MetafieldType = {
@@ -13,6 +13,8 @@ export const MetafieldType = {
   URL: 'url',
   LIST_SINGLE_LINE_TEXT_FIELD: 'list.single_line_text_field',
   RICH_TEXT_FIELD: 'rich_text_field',
+  METAOBJECT_REFERENCE: 'metaobject_reference',
+  LIST_METAOBJECT_REFERENCE: 'list.metaobject_reference',
 } as const;
 export type MetafieldType = ObjectValues<typeof MetafieldType>;
 
@@ -73,6 +75,19 @@ export interface RichTextFieldMetaobjectField extends MetaobjectFieldBase {
   value: string;
 }
 
+export interface MetaobjectReferenceMetaobjectField extends MetaobjectFieldBase {
+  valueType: typeof MetafieldType.METAOBJECT_REFERENCE;
+  value:string;
+  reference: MetaobjectField;
+}
+
+export interface ListMetaobjectReferenceMetaobjectField extends MetaobjectFieldBase {
+  valueType: typeof MetafieldType.LIST_METAOBJECT_REFERENCE;
+  value: string[];
+  references: MetaobjectField[];
+
+}
+
 export type MetaobjectField =
   | BooleanMetaobjectField
   | DateTimeMetaobjectField
@@ -83,7 +98,9 @@ export type MetaobjectField =
   | NullMetaobjectField
   | UrlMetaobjectField
   | ListSingleLineTextFieldMetaobjectField
-  | RichTextFieldMetaobjectField;
+  | RichTextFieldMetaobjectField
+  | MetaobjectReferenceMetaobjectField
+  | ListMetaobjectReferenceMetaobjectField;
 
 export type NonNullMetaobjectField = Exclude<
   MetaobjectField,
@@ -97,6 +114,14 @@ export const MemberProfileSchemaForAdmin = z
     role: z.enum(["Founder", "Founding Member", "Member"]),
     email: z.string().min(3).email(),
   });
+
+  export const ReviewSchema = z.object({
+    id: z.string().optional(),
+    reference: z.string().optional(),
+    review_content: z.any().optional().nullable(),
+    reviewer: z.string().optional(),
+    link: z.string().url().optional().nullable(),
+  })
 
 export const MemberProfileSchema = z
   .object({
@@ -119,6 +144,7 @@ export const MemberProfileSchema = z
     technologies: z.array(z.string()).optional().nullable(),
     industry_experience: z.array(z.string()).optional().nullable(),
     // description: z.any().optional().nullable(),
+    review: z.array(ReviewSchema).optional().nullable(),
   });
 
 export type MemberProfileSchemaType = z.infer<typeof MemberProfileSchema>;
@@ -140,9 +166,9 @@ export const MemberProfileSchemaWithPassword = MemberProfileSchemaForAdmin.merge
 export type MemberProfileSchemaWithPasswordType = z.infer<typeof MemberProfileSchemaWithPassword>;
 
 export function mapAdminResponseToMetaobjectField(
-  field: Pick<AdminMetaobjectField, 'key' | 'value' | 'type'>,
+  field: Pick<AdminMetaobjectField, 'key' | 'value' | 'type' | 'reference' | 'references'>,
 ): MetaobjectField {
-  const { key, type, value } = field;
+  const { key, type, value, reference, references } = field;
 
   if (!value) {
     return {
@@ -247,9 +273,53 @@ export function mapAdminResponseToMetaobjectField(
         valueType: type,
         value: richTextFieldValue,
       };
+    case MetafieldType.METAOBJECT_REFERENCE:
+      let referenceData;
+      console.log({reference})
+      if(reference && reference.__typename === "Metaobject"){
+        let referenceFields;
+        referenceFields = reference.fields.map(field => mapAdminResponseToMetaobjectField(field));
+        referenceData = {id: reference.id, ...mapToSchema(referenceFields)};
+      }
+      return {
+        key: key,
+        valueType: type,
+        value: value,
+        reference: referenceData,        
+      };
+    case MetafieldType.LIST_METAOBJECT_REFERENCE:
+      let listReferenceData : (Maybe<MetafieldReference> | undefined)[] = [];
+      if(references){
+        listReferenceData = references.edges.map(edge => edge.node);
+      }
+      let listReferenceDataWithFields = listReferenceData.map(reference => {
+        if(reference && reference.__typename === "Metaobject"){
+          let fields = reference.fields.map(field => mapAdminResponseToMetaobjectField(field));
+          return {id: reference.id, ...mapToSchema(fields)};
+        }
+        return null;
+      });
+      return {
+        key: key,
+        valueType: type,
+        value: value,
+        references: listReferenceDataWithFields,
+      };
     default:
       throw new Error(
         `Unsupported field type '${field.type}' for field '${field.key}'`,
       );
   }
+}
+
+function mapToSchema(
+  fields: MetaobjectField[],
+) {
+  return fields.reduce(
+    (acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    },
+    {} as { [key: string]: any },
+  );
 }

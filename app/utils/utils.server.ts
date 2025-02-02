@@ -15,7 +15,7 @@ import {
 } from "~/types/admin.generated";
 import invariant from "tiny-invariant";
 import UpdateMember from "~/graphql/UpdateMember";
-import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MemberProfileSchemaForAdmin, MetaobjectField } from "~/zodschema/MemberProfileSchema";
+import { mapAdminResponseToMetaobjectField, MemberProfileSchema, MemberProfileSchemaForAdmin, MetafieldType, MetaobjectField } from "~/zodschema/MemberProfileSchema";
 import { MemberPasswordSchema } from "~/zodschema/MemberPassword";
 
 export const createHashedPassword = async ({
@@ -34,7 +34,6 @@ export const getAppInstallationId = async (admin: AdminApiContext) => {
     const { data } = (await response.json()) as {
       data: CurrentAppInstallationQuery;
     };
-    console.log("data", data);
 
     return { id: data.currentAppInstallation.id };
   } catch (e) {
@@ -200,9 +199,9 @@ export const getMemberByHandle = async ({
   const { data } = (await response.json()) as { data: GetMemberByHandleQuery };
   const { metaobjectByHandle } = data;
   invariant(metaobjectByHandle, "No metaobjectByHandle in response");
-
   const typedMetaobjectFields = metaobjectByHandle.fields.map(mapAdminResponseToMetaobjectField);
   const member = {id: metaobjectByHandle.id, ...mapToSchema(typedMetaobjectFields)};
+
   const submission = isAdmin ? MemberProfileSchemaForAdmin.safeParse(member) : MemberProfileSchema.safeParse(member);
   if (!submission.success) {
     console.error("submission.error", submission.error);
@@ -223,7 +222,6 @@ export const updateMember = async ({
 
   //todo: make sure it actually change the status of the member based on the public profile. The expected behaviour is: memeber profile is only visible if the public profile is true.
   let input = convertInputToGqlFormat(fields);
-  // console.log("input", input);
   const response = await admin.graphql(UpdateMember, {
     variables: {
       id,
@@ -277,7 +275,11 @@ function mapToSchema(
 ) {
   return fields.reduce(
     (acc, field) => {
-      acc[field.key] = field.value;
+      if(field.valueType === MetafieldType.LIST_METAOBJECT_REFERENCE){
+        acc[field.key] = field.references;
+      } else {
+        acc[field.key] = field.value;
+      }
       return acc;
     },
     {} as { [key: string]: any },
