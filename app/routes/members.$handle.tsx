@@ -148,7 +148,7 @@ export default function MemberDashboard() {
         <Page
           title={`Hello ${name.value}👋`}
           fullWidth={false}
-          primaryAction={ <Button loading={isPending} submit variant={"primary"}>Save</Button>}
+          primaryAction={ <Button loading={isPending} submit variant={"primary"} disabled={!isDirty}>Save</Button>}
           secondaryActions={[{
             content: "Reset Password",
             onAction: handleResetPassword
