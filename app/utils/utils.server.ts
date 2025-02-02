@@ -220,6 +220,8 @@ export const updateMember = async ({
   admin: AdminApiContext;
   [key: string]: any;
 }) => {
+
+  //todo: make sure it actually change the status of the member based on the public profile. The expected behaviour is: memeber profile is only visible if the public profile is true.
   let input = convertInputToGqlFormat(fields);
   // console.log("input", input);
   const response = await admin.graphql(UpdateMember, {
