@@ -33,24 +33,6 @@ import invariant from "tiny-invariant";
 import { MemberProfileSchema, MemberProfileSchemaType } from "~/zodschema/MemberProfileSchema";
 import { ServicesWrapper } from "../components/ServicesWrapper";
 
-const validLanguages = [
-  "English",
-  "Punjabi",
-  "Dutch",
-  "French",
-  "Spanish",
-  "Mandarin Chinese",
-  "Gujarati",
-  "Hindi",
-  "Russian",
-  "Turkish",
-  "Azerbaijani",
-  "Polish",
-  "German",
-  "Greek",
-];
-
-
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   console.log("Inside loader: members.$handle");
@@ -230,7 +212,6 @@ export default function MemberDashboard() {
                 <Card>
                   <LanguagesWrapper
                     languages={fields.languages.name}
-                    validLanguages={validLanguages}
                   />
                   <FormLayout>
                     <input type="hidden" name="id" value={fields.id.value} />

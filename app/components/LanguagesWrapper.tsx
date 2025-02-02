@@ -13,12 +13,27 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FieldName } from "@conform-to/dom";
 import { useField, useInputControl } from "@conform-to/react";
 
+const validLanguages = [
+  "English",
+  "Punjabi",
+  "Dutch",
+  "French",
+  "Spanish",
+  "Mandarin Chinese",
+  "Gujarati",
+  "Hindi",
+  "Russian",
+  "Turkish",
+  "Azerbaijani",
+  "Polish",
+  "German",
+  "Greek",
+];
+
 export function LanguagesWrapper({
   languages,
-  validLanguages,
 }: {
   languages: FieldName<string[] | null>;
-  validLanguages: string[];
 }) {
   const [meta] = useField(languages);
   const languagesInput = useInputControl(meta);
