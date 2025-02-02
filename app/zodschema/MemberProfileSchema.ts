@@ -116,7 +116,7 @@ export const MemberProfileSchema = z
     alternative_contact: z.string().url().optional().nullable(),
     primary_service: z.string().optional().nullable(),
     services: z.array(z.string()).optional().nullable(),
-    // technologies: z.array(z.string()).optional().nullable(),
+    technologies: z.array(z.string()).optional().nullable(),
     // industry_experience: z.array(z.string()).optional().nullable(),
     // description: z.any().optional().nullable(),
   });

@@ -32,6 +32,7 @@ import { LinksWrapper } from "~/components/LinksWrapper";
 import invariant from "tiny-invariant";
 import { MemberProfileSchema, MemberProfileSchemaType } from "~/zodschema/MemberProfileSchema";
 import { ServicesWrapper } from "../components/ServicesWrapper";
+import { TechnologiesWrapper } from "../components/TechnologiesWrapper";
 
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -158,6 +159,11 @@ export default function MemberDashboard() {
               <BlockStack gap={"400"}>
                 <Card>
                   <FormLayout>
+                    <input type="hidden" name="id" value={fields.id.value} />
+                    <InlineError
+                      fieldID={form.errorId}
+                      message={form.errors?.join() || ""}
+                    />
                     <InlineGrid gap={"400"} columns={["oneThird", "twoThirds"]}>
                       <ProfilePhoto />
                       <FormLayout>
@@ -213,13 +219,11 @@ export default function MemberDashboard() {
                   <LanguagesWrapper
                     languages={fields.languages.name}
                   />
-                  <FormLayout>
-                    <input type="hidden" name="id" value={fields.id.value} />
-                    <InlineError
-                      fieldID={form.errorId}
-                      message={form.errors?.join() || ""}
-                    />
-                  </FormLayout>
+                </Card>
+                <Card>
+                  <TechnologiesWrapper
+                    technologies={fields.technologies.name}
+                  />
                 </Card>
               </BlockStack>
             </Layout.Section>
@@ -229,6 +233,7 @@ export default function MemberDashboard() {
     </FormProvider>
   );
 }
+
 
 
 
