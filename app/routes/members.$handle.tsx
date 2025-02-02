@@ -75,17 +75,9 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
   const { id, ...fields } = submission.value;
   console.log("new fields", fields);
+  invariant(id, "Id is required");
   try {
-    // await updateMember({ admin, id, ...fields });
-    // let member: { [p: string]: any; id: string } = await getMemberByHandle({
-    //   admin,
-    //   handle,
-    // });
-    // const result = MemberData.safeParse(member);
-    // if (!result.success) {
-    //   console.error(result.error);
-    //   return json({ member: null });
-    // }
+    await updateMember({ admin, id, ...fields });
   } catch (e) {
     console.error(e);
     return submission.reply({

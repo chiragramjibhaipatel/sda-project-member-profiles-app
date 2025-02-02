@@ -213,16 +213,14 @@ export const getMemberByHandle = async ({
 
 export const updateMember = async ({
   id,
-  name,
-  role,
   admin,
+  ...fields
 }: {
   id: string;
-  name: string;
-  role: string;
   admin: AdminApiContext;
+  [key: string]: any;
 }) => {
-  let input = convertInputToGqlFormat({ name, role });
+  let input = convertInputToGqlFormat(fields);
   // console.log("input", input);
   const response = await admin.graphql(UpdateMember, {
     variables: {
