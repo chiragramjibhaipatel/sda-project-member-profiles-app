@@ -127,7 +127,7 @@ export type Review = z.infer<typeof ReviewSchema>;
 
 export const ReviewsWrapperSchema = z.object({
   ids: z.array(z.string()),
-  references: z.array(ReviewSchema)
+  references: z.array(ReviewSchema).readonly()
 })
 export type ReviewsWrapper = z.infer<typeof ReviewsWrapperSchema>;
 

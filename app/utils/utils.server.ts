@@ -231,13 +231,12 @@ export const updateMember = async ({
     },
   });
   const { data } = await response.json() as { data: UpdateMemberMutation };
-
   const { metaobjectUpdate } = data;
   invariant(metaobjectUpdate, "No metaobjectUpdate in response");
 
   if (metaobjectUpdate?.userErrors.length > 0) {
     console.error("userErrors", JSON.stringify(metaobjectUpdate.userErrors));
-    throw new Error("Something went wrong while updating the member");
+    throw new Error("Error from shopify while updating the member");
   }
 };
 
@@ -251,15 +250,9 @@ const fieldsWithRichText = [
 function convertInputToGqlFormat(input: { [key: string]: any }) {
   return Object.keys(input).map((key) => {
     let value = input[key];
-    if (fieldsWithRichText.includes(key)) {
-      value = {
-        type: "root",
-        children: [
-          { type: "paragraph", children: [{ text: value, type: "text" }] },
-        ],
-      };
-      // value = JSON.stringify(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-      console.log("value", value);
+    if(key === "review") {
+      //its a linked metafield and to update it we need to update the ids of the linked metafields
+      value = JSON.stringify(value.ids);
     } else {
       value = typeof value !== "string" ? JSON.stringify(value) : value;
     }
