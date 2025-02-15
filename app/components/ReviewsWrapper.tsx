@@ -7,7 +7,7 @@ import { useCallback } from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { ReviewSchema } from "~/zodschema/MemberProfileSchema";
-import { Form, useActionData, useFetcher, useParams } from "@remix-run/react";
+import { Form, useActionData, useFetcher, useNavigation, useParams } from "@remix-run/react";
 import {action as ReviewAction} from "~/routes/members.$handle.reviews.$review-id";
 export default function ReviewsWrapper({ reviews }: { reviews: FieldName<ReviewsWrapperType | null | undefined> }) {
     const [reviewsMeta] = useField(reviews);
@@ -28,7 +28,6 @@ export default function ReviewsWrapper({ reviews }: { reviews: FieldName<Reviews
 
     const reviewsReviewsFieldSet = reviewsFieldSet.references.getFieldList();
 
-    console.log("Current Reviews: ", ids.value);
 
     return (
         <BlockStack gap="400">
@@ -89,6 +88,7 @@ function OneReview({ review, handleDeleteIds, currentIds }: { review: FieldName<
 function EditReviewModal(review: {id: string, reference: string | undefined, reviewer: string | undefined, link: string | undefined}) {
     const [active, setActive] = useState(false);
     const fetcher = useFetcher<typeof ReviewAction>();
+    const navigation = useNavigation();
     const { handle } = useParams();
 
     const [form, fields] = useForm({
@@ -99,7 +99,7 @@ function EditReviewModal(review: {id: string, reference: string | undefined, rev
             reviewer: review.reviewer,
             link: review.link
         },
-        lastResult: fetcher.data,
+        lastResult: navigation.state === 'idle' ? fetcher.data : undefined,
         onValidate({ formData }) {
             return parseWithZod(formData, { schema: ReviewSchema });
         },

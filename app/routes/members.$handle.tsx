@@ -14,7 +14,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { unauthenticated } from "~/shopify.server";
 import { getMemberByHandle, updateMember } from "~/utils/utils.server";
-import { Form, useActionData, useLoaderData, useParams, useNavigate } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useParams, useNavigate, useNavigation } from "@remix-run/react";
 import { sessionStorage } from "~/session.server";
 import { useIsPending } from "~/utils/misc";
 import {
@@ -78,6 +78,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
   invariant(id, "Id is required");
   try {
     await updateMember({ admin, id, ...fields });
+    
   } catch (e) {
     console.error(e);
     return submission.reply({
@@ -93,18 +94,18 @@ export default function MemberDashboard() {
   let actionData = useActionData<typeof action>();
   const isPending = useIsPending();
   const navigate = useNavigate();
+  const navigation = useNavigation();
 
   const [form, fields] = useForm({
     id: `member-form-${handle}`,
-    lastResult: actionData,
     defaultValue: member,
+    lastResult: navigation.state != 'idle' ? null : actionData,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: MemberProfileSchema });
     },
     shouldValidate: "onBlur",
-    shouldRevalidate: "onInput",
+    shouldRevalidate: "onInput"
   });
-  const isDirty = JSON.stringify(form.initialValue) !== JSON.stringify(form.value);
   const name = useInputControl(fields.name);
   const tagline = useInputControl(fields.tagline);
   const email = useInputControl(fields.email);
@@ -127,7 +128,7 @@ export default function MemberDashboard() {
         <Page
           title={`Hello ${name.value}👋`}
           fullWidth={false}
-          primaryAction={ <Button loading={isPending} submit variant={"primary"} disabled={!isDirty}>Save</Button>}
+          primaryAction={ <Button loading={isPending} submit variant={"primary"} disabled={!form.dirty}>Save</Button>}
           secondaryActions={[
             {
               content: "Reset Password",

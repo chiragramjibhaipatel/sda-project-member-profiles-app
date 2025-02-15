@@ -24,7 +24,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const formData = await request.formData();
     const submission = parseWithZod(formData, { schema: ReviewSchema });
     if (submission.status !== "success") {
-        return json(submission.reply(), { status: 400 });
+        return json(submission.reply())
     }
     const { reference, reviewer, link } = submission.value;
     const reviewId = params["review-id"];
